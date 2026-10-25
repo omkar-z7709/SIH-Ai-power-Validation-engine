@@ -1,0 +1,90 @@
+{
+  "source": "All India Council for Technical Education (AICTE)",
+  "publication": "Approval Process Handbook (APH) 2024-2027 (Extended through 2026-27)",
+  "version": "APH-2026.1",
+  "extractedTimestamp": "2026-10-25T16:50:00Z",
+  "storageStrategy": "Local Disk / Ready for S3 or Object Database migration",
+  "chapters": [
+    {
+      "id": "CH-01",
+      "title": "Grant of Approval for Establishment of a New Technical Institution",
+      "filePath": "storage/regulatory_rules/aicte_official/chapter_1_new_institutions.md",
+      "mandatoryDocuments": [
+        "Registered Land Sale/Lease Deed (min 30 years)",
+        "Non-Agricultural Land Conversion Certificate",
+        "Town Planning Approved Building Plan",
+        "Municipal Occupancy / Completion Certificate",
+        "Structural Stability Certificate by Chartered Engineer",
+        "Fire Safety Department No Objection Certificate (NOC)",
+        "University Letter of Intent / Affiliation NOC",
+        "Society/Trust Registration & Memorandum of Association",
+        "Notarized Compliance Affidavit 1"
+      ],
+      "deterministicRulesEnforced": [
+        "RULE_REQ_DOC_MISSING",
+        "RULE_INSTITUTION_NAME_MISMATCH",
+        "RULE_DUPLICATE_FILE"
+      ]
+    },
+    {
+      "id": "CH-02",
+      "title": "Grant of Extension of Approval (EoA)",
+      "filePath": "storage/regulatory_rules/aicte_official/chapter_2_extension_of_approval.md",
+      "mandatoryDocuments": [
+        "Continuation of Affiliation Order from University",
+        "Accreditation Certificate (NAAC or NBA)",
+        "Annual Compliance Affidavit",
+        "Valid Fire & Life Safety Certificate"
+      ],
+      "deterministicRulesEnforced": [
+        "RULE_EXPIRED_CERTIFICATE",
+        "RULE_INVALID_DATE_ORDER",
+        "RULE_VERIFICATION_REQUIRED"
+      ]
+    },
+    {
+      "id": "CH-03",
+      "title": "Collaboration & Joint Degrees (Twinning & Dual Degree)",
+      "filePath": "storage/regulatory_rules/aicte_official/chapter_3_collaboration_twinning.md",
+      "mandatoryDocuments": [
+        "Bilateral MoU Agreement with Credit Transfer Clause",
+        "Association of Indian Universities (AIU) Equivalence Certificate",
+        "MEA / Embassy Clearance Certificate",
+        "NAAC A+ or NBA Tier-1 Accreditation Order"
+      ]
+    },
+    {
+      "id": "CH-04",
+      "title": "Increase in Intake and Additional Programs",
+      "filePath": "storage/regulatory_rules/aicte_official/chapter_4_intake_variations.md",
+      "mandatoryDocuments": [
+        "NBA Program Accreditation Certificate (Min 50% eligible courses)",
+        "University Intake Endorsement Order",
+        "Chartered Architect Built-Up Area Expansion Certificate",
+        "Faculty Cadre Recruitment Plan"
+      ]
+    },
+    {
+      "id": "APP-04-05",
+      "title": "Norms for Land, Built-Up Space, Computers & Digital Infrastructure",
+      "filePath": "storage/regulatory_rules/aicte_official/appendices_land_faculty_norms.md",
+      "metrics": {
+        "landMegaCities": "1.5 Acres",
+        "landUrban": "2.5 Acres",
+        "landRural": "7.5 Acres",
+        "computerRatioEngineering": "1:4",
+        "computerRatioManagement": "1:2",
+        "minBandwidthMbps": 100
+      }
+    },
+    {
+      "id": "APP-16-17",
+      "title": "Statutory Affidavits & Legal Undertakings Format",
+      "filePath": "storage/regulatory_rules/aicte_official/affidavits_statutory_formats.md",
+      "keyAffidavits": [
+        "Affidavit 1: Genuine credentials, encumbrance-free land, 7th CPC compliance",
+        "Affidavit 2: Zero-tolerance anti-ragging & non-capitation compliance"
+      ]
+    }
+  ]
+}
