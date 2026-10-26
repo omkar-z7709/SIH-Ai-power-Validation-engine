@@ -85,7 +85,10 @@ export function extractFieldsFromText(text: string, category: DocumentCategory):
   for (const pat of instPatterns) {
     const match = text.match(pat);
     if (match && match[1]) {
-      fields.institutionName = match[1].trim().replace(/\s+/g, " ");
+      let cleaned = match[1].trim().replace(/\s+/g, " ");
+      // Strip trailing labels if text was flattened into a single line
+      cleaned = cleaned.replace(/\s+(application id|state|address|grade|certificate no|issue date|expiry date|valid until)[\s\S]*$/i, "").trim();
+      fields.institutionName = cleaned;
       break;
     }
   }

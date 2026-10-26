@@ -50,6 +50,13 @@ export async function processUploadedFile(
   const extractedFields = extractFieldsFromText(extractionResult.text, classification.category);
 
   const now = new Date().toISOString();
+  let provenanceMode: "live" | "fallback" | "mock" = "live";
+  if (extractionResult.provider === "TesseractOcr" || extractionResult.provider === "GeminiVisionOCR") {
+    provenanceMode = "fallback";
+  } else if (extractionResult.provider === "None") {
+    provenanceMode = "fallback";
+  }
+
   const docRecord: DocumentRecord = {
     id: `doc_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
     applicationId,
@@ -65,6 +72,10 @@ export async function processUploadedFile(
     extractedFields,
     ocrConfidence: extractionResult.confidence,
     isScannedImage: extractionResult.isScanned,
+    provenance: {
+      provider: extractionResult.provider,
+      mode: provenanceMode,
+    },
     findings: [],
     verificationStatus:
       classification.category === "ACCREDITATION_CERTIFICATE" ||

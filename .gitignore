@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,26 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local document storage and OCR training cache
+/storage/documents/*
+!/storage/documents/.gitkeep
+*.traineddata
+*.jpg
+*.jpeg
+*.png
+*.pdf
+
+# temporary test documents and local logs
+/test-docs/
+*.log
+
+# ide and tools
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+

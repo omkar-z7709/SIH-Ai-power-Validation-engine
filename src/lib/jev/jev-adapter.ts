@@ -9,6 +9,22 @@ export interface JevDecisionRequest {
   extractedSummary: Record<string, unknown>;
 }
 
+export interface JevDecisionResponse {
+  usedModel: string;
+  proposedStatus: DecisionStatus;
+  reviewPriority: "URGENT" | "STANDARD" | "LOW";
+  recommendedNextStep: string;
+  advisoryNotes: string;
+  timestamp: string;
+  isRuleBasedFallback: boolean;
+  calibrationConfidence?: number;
+  provenance: {
+    layer: "JEV_OFFICIAL" | "JEV_OPENROUTER_PROXY" | "DETERMINISTIC_RULES_FALLBACK";
+    mode: "live" | "fallback" | "mock";
+    modelName: string;
+  };
+}
+
 export const JevDecisionResponseSchema = z.object({
   usedModel: z.string(),
   proposedStatus: z.enum([
@@ -26,9 +42,12 @@ export const JevDecisionResponseSchema = z.object({
   timestamp: z.string(),
   isRuleBasedFallback: z.boolean(),
   calibrationConfidence: z.number().min(0).max(1).optional(),
+  provenance: z.object({
+    layer: z.enum(["JEV_OFFICIAL", "JEV_OPENROUTER_PROXY", "DETERMINISTIC_RULES_FALLBACK"]),
+    mode: z.enum(["live", "fallback", "mock"]),
+    modelName: z.string(),
+  }),
 });
-
-export type JevDecisionResponse = z.infer<typeof JevDecisionResponseSchema>;
 
 export class JevDecisionAdapter {
   private openRouterKey?: string;
@@ -93,14 +112,19 @@ Return ONLY a valid JSON object matching this structure:
           if (match) {
             const parsed = JSON.parse(match[0]);
             return JevDecisionResponseSchema.parse({
-              usedModel: "OpenRouter / flint-v1.0 (Jev Decision Mode)",
+              usedModel: "OpenRouter Proxy (AI Decision Mode)",
               proposedStatus: parsed.proposedStatus || "NEEDS_REVIEW",
               reviewPriority: parsed.reviewPriority || "STANDARD",
               recommendedNextStep: parsed.recommendedNextStep || "Review flagged findings.",
-              advisoryNotes: "Real-time decision support from OpenRouter AI proxy.",
+              advisoryNotes: "Real-time decision support delivered via OpenRouter AI proxy.",
               timestamp: new Date().toISOString(),
               isRuleBasedFallback: false,
               calibrationConfidence: parsed.confidence || 0.95,
+              provenance: {
+                layer: "JEV_OPENROUTER_PROXY",
+                mode: "fallback",
+                modelName: "recursive/flint-v1.0:free",
+              },
             });
           }
         }
@@ -153,6 +177,11 @@ Return ONLY a valid JSON object matching this structure:
             timestamp: new Date().toISOString(),
             isRuleBasedFallback: false,
             calibrationConfidence: typeof rawJson.confidence === "number" ? rawJson.confidence : 0.92,
+            provenance: {
+              layer: "JEV_OFFICIAL",
+              mode: "live",
+              modelName: "jev-latest",
+            },
           });
         }
       } catch (err) {
@@ -206,6 +235,11 @@ Return ONLY a valid JSON object matching this structure:
       timestamp: new Date().toISOString(),
       isRuleBasedFallback: true,
       calibrationConfidence: 1.0,
+      provenance: {
+        layer: "DETERMINISTIC_RULES_FALLBACK",
+        mode: "fallback",
+        modelName: "aicte-rules-engine-v1",
+      },
     };
   }
 }

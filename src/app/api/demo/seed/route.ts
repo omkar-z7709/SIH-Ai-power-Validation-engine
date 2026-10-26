@@ -3,13 +3,97 @@ import { ApplicationRepository } from "@/lib/db/repository";
 import { ApplicationRecord, DocumentRecord } from "@/types";
 import { runDeterministicValidation } from "@/lib/rules/rules-engine";
 import { jevAdapter } from "@/lib/jev/jev-adapter";
+import { connectDB } from "@/lib/db/connection";
+import { UserModel } from "@/models/User";
+import { InstitutionModel } from "@/models/Institution";
+import { hashPassword } from "@/lib/auth/session";
 
 export async function POST() {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json(
+      { success: false, error: "Demo seed is disabled in production" },
+      { status: 403 }
+    );
+  }
+
   try {
     await ApplicationRepository.clearAll();
+    await connectDB();
 
     const now = new Date();
     const isoNow = now.toISOString();
+
+    // 1. Seed Demo Institution
+    const demoInstitutionId = "inst_apex_tech_01";
+    await InstitutionModel.findOneAndUpdate(
+      { officialCode: "AICTE-INST-DEL-101" },
+      {
+        officialCode: "AICTE-INST-DEL-101",
+        name: "Apex Institute of Advanced Technology",
+        legalEntityName: "Apex Educational Foundation Trust",
+        state: "Delhi",
+        district: "New Delhi",
+        taluka: "Connaught Place",
+        pinCode: "110001",
+        address: "Plot 14, Institutional Area, Sector 62, New Delhi",
+        isVerified: true,
+        verificationStatus: "VERIFIED",
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      { upsert: true, new: true }
+    );
+
+    // 2. Seed Demo Users with passwords from env or safe defaults
+    const collegePass = process.env.DEFAULT_COLLEGE_PASSWORD || "College@123456";
+    const officerPass = process.env.DEFAULT_OFFICER_PASSWORD || "Officer@123456";
+    const adminPass = process.env.DEFAULT_ADMIN_PASSWORD || "Admin@123456";
+
+    const collegeHash = await hashPassword(collegePass);
+    const officerHash = await hashPassword(officerPass);
+    const adminHash = await hashPassword(adminPass);
+
+    const demoUsers = [
+      {
+        email: (process.env.DEFAULT_COLLEGE_EMAIL || "college@apex.edu.in").toLowerCase(),
+        name: "Prof. Rajesh Kumar (College Admin)",
+        passwordHash: collegeHash,
+        role: "COLLEGE_ADMIN",
+        institutionId: demoInstitutionId,
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
+        email: (process.env.DEFAULT_OFFICER_EMAIL || "officer@aicte.gov.in").toLowerCase(),
+        name: "Dr. R. K. Verma (Senior Review Officer)",
+        passwordHash: officerHash,
+        role: "REVIEW_OFFICER",
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
+        email: (process.env.DEFAULT_ADMIN_EMAIL || "admin@aicte.gov.in").toLowerCase(),
+        name: "System Administrator",
+        passwordHash: adminHash,
+        role: "SYSTEM_ADMIN",
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+    ];
+
+    for (const u of demoUsers) {
+      await UserModel.findOneAndUpdate(
+        { email: u.email },
+        { ...u },
+        { upsert: true, new: true }
+      );
+    }
 
     const demoCases: Array<{
       ref: string;
@@ -290,6 +374,10 @@ export async function POST() {
         extractedText: d.text,
         extractedFields: d.fields,
         findings: [],
+        provenance: {
+          provider: "SyntheticFixtureGenerator",
+          mode: "mock",
+        },
         verificationStatus:
           d.cat === "ACCREDITATION_CERTIFICATE" || d.cat === "AFFILIATION_CERTIFICATE"
             ? "PENDING_VERIFICATION"
@@ -301,6 +389,7 @@ export async function POST() {
       const newApp: ApplicationRecord = {
         id: `app_${item.ref.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
         referenceId: item.ref,
+        institutionId: demoInstitutionId,
         institutionName: item.name,
         applicationType: item.type,
         academicYear: item.year,

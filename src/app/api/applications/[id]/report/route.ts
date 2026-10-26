@@ -29,6 +29,17 @@ export async function GET(
       });
     }
 
+    if (format === "pdf") {
+      const { generateApplicationPdf } = await import("@/lib/review/report-generator");
+      const pdfBuffer = generateApplicationPdf(app);
+      return new Response(pdfBuffer as any, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="aicte_report_${app.referenceId}.pdf"`,
+        },
+      });
+    }
+
     const json = generateApplicationJson(app);
     return new NextResponse(json, {
       headers: {

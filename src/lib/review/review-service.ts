@@ -74,7 +74,7 @@ export class ReviewService {
       }
     }
 
-    // Append-only Audit Trail
+    // Append-only Audit Trail on Application
     const auditEvent: AuditEvent = {
       id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
       applicationId: input.applicationId,
@@ -90,6 +90,28 @@ export class ReviewService {
     app.auditTrail.push(auditEvent);
 
     await ApplicationRepository.save(app);
+
+    // Also persist directly to standalone AuditEventModel collection
+    try {
+      const { logAuditEvent } = await import("@/lib/audit/logger");
+      await logAuditEvent({
+        applicationId: input.applicationId,
+        institutionId: app.institutionId,
+        actorId: input.reviewerId,
+        actor: input.reviewerName,
+        actorRole: "REVIEW_OFFICER",
+        action: `OFFICER_${input.action}`,
+        details: {
+          previousStatus: app.status,
+          outcomeStatus: resolvedOutcomeStatus,
+          notes: input.notes,
+          targetFindingId: input.targetFindingId,
+        },
+      });
+    } catch (auditErr) {
+      console.warn("Global audit log error in ReviewService:", auditErr);
+    }
+
     return app;
   }
 }

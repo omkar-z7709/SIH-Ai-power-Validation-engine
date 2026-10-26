@@ -73,58 +73,64 @@ export default function ReviewQueuePage() {
 
       <div className="space-y-2.5">
         {loading ? (
-          <div className="p-12 text-center text-muted-foreground text-xs font-mono bg-card rounded-md border border-border">
-            Loading queue...
+          <div className="p-12 text-center text-muted-foreground text-xs bg-card rounded-lg border border-border">
+            <div className="flex flex-col items-center justify-center space-y-2">
+              <span className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin inline-block"></span>
+              <span>Loading review queue...</span>
+            </div>
           </div>
         ) : filteredItems.length === 0 ? (
-          <div className="p-12 text-center text-muted-foreground text-xs bg-card rounded-md border border-border">
-            No active flags matching the selected filter.
+          <div className="p-12 text-center bg-card rounded-lg border border-border">
+            <p className="font-semibold text-xs text-foreground">No active discrepancies in this view</p>
+            <p className="text-[11px] text-muted-foreground mt-1 prose-readable mx-auto">
+              All statutory credentials matching this severity level have been verified or resolved.
+            </p>
           </div>
         ) : (
           filteredItems.map(({ app, finding }) => (
             <Card
               key={`${app.id}-${finding.id}`}
-              className="p-4 shadow-xs hover:border-primary/50 transition flex flex-col md:flex-row md:items-center justify-between gap-4"
+              className="p-4 shadow-xs hover:border-primary/50 transition flex flex-col md:flex-row md:items-center justify-between gap-4 border-border"
             >
-              <div className="space-y-1">
-                <div className="flex items-center space-x-2">
+              <div className="space-y-1.5 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
                   <SeverityBadge severity={finding.severity} />
                   <span className="font-bold text-xs text-foreground">
                     {finding.title}
                   </span>
-                  <Badge variant="outline" className="font-mono text-[10px]">
+                  <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground border border-border">
                     {finding.ruleId}
-                  </Badge>
+                  </span>
                 </div>
 
-                <div className="text-xs text-muted-foreground font-mono">
+                <div className="text-xs text-muted-foreground">
                   Institution:{" "}
-                  <span className="font-bold text-foreground">
+                  <span className="font-semibold text-foreground">
                     {app.institutionName}
                   </span>{" "}
-                  ({app.referenceId}) • {app.state}
+                  <span className="font-mono text-[11px]">({app.referenceId})</span> • {app.state}
                 </div>
 
-                <p className="text-xs text-muted-foreground max-w-3xl">
+                <p className="text-xs text-muted-foreground prose-readable leading-relaxed">
                   {finding.explanation}
                 </p>
 
                 {finding.evidenceSnippet && (
-                  <div className="text-[11px] font-mono text-muted-foreground bg-muted/40 p-1.5 rounded border border-border">
-                    <span className="font-bold text-foreground">Snippet: </span>
+                  <div className="text-[11px] font-mono text-muted-foreground bg-muted/40 p-2 rounded border border-border">
+                    <span className="font-bold text-foreground">Extracted Text: </span>
                     {finding.evidenceSnippet}
                   </div>
                 )}
               </div>
 
-              <div className="flex items-center space-x-3 shrink-0">
+              <div className="flex items-center space-x-3 shrink-0 self-start md:self-auto">
                 <StatusBadge status={app.status} size="sm" />
                 <Link
                   href={`/applications/${app.id}`}
-                  className="inline-flex items-center gap-1 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold rounded-md shadow-2xs transition"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold rounded-md shadow-2xs transition"
                 >
-                  <span>Resolve</span>
-                  <ArrowUpRight className="h-3 w-3" />
+                  <span>Review & Adjudicate</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </Card>

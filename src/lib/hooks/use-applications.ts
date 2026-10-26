@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ApplicationRecord } from "@/types";
 
-// Stable query keys
+// Stable query keys scoped by role and user
 export const applicationKeys = {
   all: ["applications"] as const,
-  lists: () => [...applicationKeys.all, "list"] as const,
+  lists: (role?: string) => [...applicationKeys.all, "list", role || "public"] as const,
   details: () => [...applicationKeys.all, "detail"] as const,
-  detail: (id: string) => [...applicationKeys.details(), id] as const,
+  detail: (id: string, role?: string) => [...applicationKeys.details(), id, role || "public"] as const,
 };
 
 // Fetch all applications

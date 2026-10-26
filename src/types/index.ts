@@ -81,6 +81,10 @@ export interface DocumentRecord {
   extractedFields: ExtractedFields;
   ocrConfidence?: number;
   isScannedImage?: boolean;
+  provenance?: {
+    provider: string;
+    mode: "live" | "fallback" | "mock";
+  };
   findings: Finding[];
   verificationStatus: "VERIFIED" | "PENDING_VERIFICATION" | "VERIFICATION_FAILED" | "NOT_REQUIRED";
   createdAt: string;
@@ -112,6 +116,7 @@ export interface AuditEvent {
 export interface ApplicationRecord {
   id: string;
   referenceId: string;
+  institutionId?: string;
   institutionName: string;
   applicationType: "NEW_INSTITUTE" | "EXTENSION_OF_APPROVAL" | "INCREASE_IN_INTAKE" | "CLOSURE";
   academicYear: string;

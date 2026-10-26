@@ -1,9 +1,53 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { FileCheck, LayoutDashboard, FolderCheck, Plus, ShieldAlert } from "lucide-react";
+import { useRouter } from "next/navigation";
+import {
+  FileCheck,
+  LayoutDashboard,
+  FolderCheck,
+  Plus,
+  ShieldAlert,
+  LogOut,
+  User,
+  LogIn,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function Navbar() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [user, setUser] = useState<{ name: string; role: string; email: string } | null>(null);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.data) {
+          setUser(data.data);
+        } else {
+          setUser(null);
+        }
+      })
+      .catch(() => setUser(null));
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      queryClient.clear();
+      setUser(null);
+      router.push("/login");
+      router.refresh();
+    } catch (e) {
+      console.error("Logout error:", e);
+    }
+  };
+
   return (
     <header className="sticky top-0 z-30 w-full border-b border-border bg-card/95 backdrop-blur">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -60,12 +104,31 @@ export function Navbar() {
 
           {/* Right Controls */}
           <div className="flex items-center space-x-2">
-            <div className="hidden sm:flex items-center space-x-1.5">
-              <Badge variant="outline" className="font-mono text-[10px] gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                Deterministic Rules Engine
-              </Badge>
-            </div>
+            {user ? (
+              <div className="flex items-center space-x-2">
+                <Badge variant="outline" className="text-[10px] font-mono gap-1 px-2 py-0.5">
+                  <User className="h-3 w-3 text-primary" />
+                  <span className="font-semibold">{user.role}</span>
+                </Badge>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleLogout}
+                  className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive gap-1"
+                >
+                  <LogOut className="h-3 w-3" />
+                  <span className="hidden sm:inline">Sign Out</span>
+                </Button>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground transition"
+              >
+                <LogIn className="h-3 w-3" />
+                <span>Sign In</span>
+              </Link>
+            )}
             <ModeToggle />
           </div>
         </div>

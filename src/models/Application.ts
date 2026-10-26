@@ -35,6 +35,10 @@ const DocumentRecordSchema = new Schema({
   extractedFields: { type: Schema.Types.Mixed, default: {} },
   ocrConfidence: { type: Number },
   isScannedImage: { type: Boolean, default: false },
+  provenance: {
+    provider: { type: String },
+    mode: { type: String, enum: ["live", "fallback", "mock"] },
+  },
   findings: [FindingSchema],
   verificationStatus: { type: String, required: true },
   createdAt: { type: String, required: true },
@@ -66,6 +70,7 @@ const AuditEventSchema = new Schema({
 const ApplicationSchema = new Schema<IApplicationModel>(
   {
     referenceId: { type: String, required: true, index: true },
+    institutionId: { type: String, index: true },
     institutionName: { type: String, required: true, index: true },
     applicationType: { type: String, required: true },
     academicYear: { type: String, required: true },

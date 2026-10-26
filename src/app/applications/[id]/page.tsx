@@ -161,6 +161,14 @@ export default function ApplicationDetailPage({
 
         <div className="flex items-center space-x-2">
           <a
+            href={`/api/applications/${app.id}/report?format=pdf`}
+            download
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary transition shadow-2xs"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            <span>Export PDF</span>
+          </a>
+          <a
             href={`/api/applications/${app.id}/report?format=csv`}
             download
             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-input bg-card hover:bg-muted text-foreground transition shadow-2xs"
@@ -231,38 +239,40 @@ export default function ApplicationDetailPage({
             {/* Tab 1: Findings */}
             <TabsContent value="findings" className="space-y-3">
               {app.allFindings.length === 0 ? (
-                <div className="p-6 text-center bg-emerald-500/10 rounded-md border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-xs">
-                  <CheckCircle2 className="h-6 w-6 mx-auto mb-1 text-emerald-600" />
-                  <p className="font-bold">Zero Violations Detected</p>
-                  <p className="mt-0.5">Application complies with preliminary statutory norms.</p>
+                <div className="p-8 text-center bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-emerald-800 dark:text-emerald-300">
+                  <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-emerald-600 dark:text-emerald-400" />
+                  <p className="font-bold text-sm">All Statutory Checks Passed</p>
+                  <p className="mt-1 text-xs text-muted-foreground prose-readable mx-auto">
+                    No discrepancies, expired certificates, or naming mismatches were found. The application complies with preliminary AICTE requirements.
+                  </p>
                 </div>
               ) : (
                 app.allFindings.map((finding) => (
                   <div
                     key={finding.id}
-                    className={`p-3.5 rounded-md border transition ${
+                    className={`p-4 rounded-lg border transition ${
                       finding.dismissed
-                        ? "bg-muted/30 border-border opacity-60"
+                        ? "bg-muted/30 border-border opacity-65"
                         : "bg-card border-border shadow-2xs"
                     }`}
                   >
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                      <div className="space-y-1.5 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
                           <SeverityBadge severity={finding.severity} />
                           <span className="font-bold text-xs text-foreground">
                             {finding.title}
                           </span>
-                          <Badge variant="outline" className="font-mono text-[10px]">
+                          <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted/80 text-muted-foreground border border-border">
                             {finding.ruleId}
-                          </Badge>
+                          </span>
                           {finding.dismissed && (
-                            <Badge variant="secondary" className="font-mono text-[10px]">
-                              Dismissed by Officer
-                            </Badge>
+                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+                              Waived by Scrutiny Officer
+                            </span>
                           )}
                         </div>
-                        <p className="text-xs text-muted-foreground pt-0.5">
+                        <p className="text-xs text-muted-foreground prose-readable leading-relaxed">
                           {finding.explanation}
                         </p>
                       </div>
@@ -272,26 +282,26 @@ export default function ApplicationDetailPage({
                           variant="outline"
                           size="sm"
                           onClick={() => handleDismissFinding(finding.id)}
-                          className="text-[11px] h-7 shadow-2xs"
+                          className="text-[11px] h-8 shrink-0 border-dashed hover:border-solid hover:bg-muted"
                         >
-                          Dismiss / Justify
+                          Waive Violation
                         </Button>
                       )}
                     </div>
 
                     {finding.evidenceSnippet && (
-                      <div className="mt-2.5 p-2 bg-muted/40 rounded border border-border text-[11px] text-muted-foreground font-mono">
-                        <span className="font-bold text-foreground">Evidence: </span>
+                      <div className="mt-3 p-2.5 bg-muted/40 rounded border border-border text-[11px] text-muted-foreground font-mono">
+                        <span className="font-bold text-foreground">Extracted Document Text: </span>
                         {finding.evidenceSnippet}
                       </div>
                     )}
 
-                    <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted-foreground pt-2 border-t border-border font-mono">
-                      <div>
-                        <span className="font-bold text-foreground">Next Step: </span>
-                        {finding.suggestedAction}
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground pt-2.5 border-t border-border">
+                      <div className="flex items-center gap-1.5">
+                        <span className="font-semibold text-foreground">Required Action: </span>
+                        <span>{finding.suggestedAction}</span>
                       </div>
-                      <div>Source: {finding.source}</div>
+                      <div className="font-mono text-[10px]">Evaluation Source: {finding.source}</div>
                     </div>
                   </div>
                 ))
@@ -300,31 +310,39 @@ export default function ApplicationDetailPage({
 
             {/* Tab 2: Comparison Grid */}
             <TabsContent value="comparison" className="space-y-3">
-              <p className="text-xs text-muted-foreground">
-                Side-by-side comparison across all submitted credentials against the master registration.
-              </p>
-              <div className="border border-border rounded-md overflow-hidden">
-                <Table>
-                  <TableHeader className="bg-muted/30">
-                    <TableRow>
-                      <TableHead className="text-xs font-bold">Document</TableHead>
-                      <TableHead className="text-xs font-bold">Category</TableHead>
-                      <TableHead className="text-xs font-bold">Extracted Entity Name</TableHead>
-                      <TableHead className="text-xs font-bold">Cert / Ref #</TableHead>
-                      <TableHead className="text-xs font-bold">Issue Date</TableHead>
-                      <TableHead className="text-xs font-bold">Expiry Date</TableHead>
-                      <TableHead className="text-xs font-bold">Issuing Authority</TableHead>
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground">
+                  Side-by-side comparison across all submitted credentials against the master registration.
+                </p>
+                <span className="text-[10px] font-mono text-muted-foreground flex items-center gap-1">
+                  Scroll horizontally to view all fields →
+                </span>
+              </div>
+              <div className="border border-border rounded-lg overflow-hidden bg-card/60 shadow-xs">
+                <Table className="min-w-[840px]">
+                  <TableHeader className="bg-muted/40 border-b border-border">
+                    <TableRow className="hover:bg-transparent">
+                      <TableHead className="text-xs font-semibold py-3 pl-4">Document</TableHead>
+                      <TableHead className="text-xs font-semibold py-3">Category</TableHead>
+                      <TableHead className="text-xs font-semibold py-3">Extracted Entity Name</TableHead>
+                      <TableHead className="text-xs font-semibold py-3">Cert / Ref #</TableHead>
+                      <TableHead className="text-xs font-semibold py-3">Issue Date</TableHead>
+                      <TableHead className="text-xs font-semibold py-3">Expiry Date</TableHead>
+                      <TableHead className="text-xs font-semibold py-3 pr-4">Issuing Authority</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody className="text-xs font-mono">
-                    <TableRow className="bg-muted/50 font-bold">
-                      <TableCell className="font-sans">Master Application</TableCell>
-                      <TableCell>APPLICATION_FORM</TableCell>
-                      <TableCell className="text-primary font-sans">{app.institutionName}</TableCell>
-                      <TableCell>{app.referenceId}</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell className="font-sans">AICTE Portal</TableCell>
+                    <TableRow className="bg-primary/5 font-semibold border-b border-border">
+                      <TableCell className="font-sans pl-4 text-foreground flex items-center gap-1.5 py-3">
+                        <span className="h-2 w-2 rounded-full bg-primary inline-block"></span>
+                        Master Application
+                      </TableCell>
+                      <TableCell className="text-primary font-sans font-medium">APPLICATION_FORM</TableCell>
+                      <TableCell className="text-primary font-sans font-bold">{app.institutionName}</TableCell>
+                      <TableCell className="text-foreground">{app.referenceId}</TableCell>
+                      <TableCell className="text-muted-foreground">-</TableCell>
+                      <TableCell className="text-muted-foreground">-</TableCell>
+                      <TableCell className="font-sans text-foreground pr-4">AICTE Portal</TableCell>
                     </TableRow>
 
                     {app.documents.map((doc) => {
@@ -335,32 +353,38 @@ export default function ApplicationDetailPage({
                         instName.toLowerCase() !== app.institutionName.toLowerCase();
 
                       return (
-                        <TableRow key={doc.id} className="hover:bg-muted/20">
-                          <TableCell className="font-sans font-medium">{doc.originalFilename}</TableCell>
-                          <TableCell className="text-muted-foreground">{doc.category}</TableCell>
+                        <TableRow key={doc.id} className="hover:bg-muted/30 transition-colors border-b border-border/60">
+                          <TableCell className="font-sans font-medium text-foreground pl-4 py-3">
+                            {doc.originalFilename}
+                          </TableCell>
+                          <TableCell className="text-muted-foreground font-sans">
+                            <span className="px-1.5 py-0.5 rounded bg-muted/60 text-[11px]">
+                              {doc.category}
+                            </span>
+                          </TableCell>
                           <TableCell className="font-sans">
                             {instName ? (
                               <span
                                 className={
                                   isMismatch
-                                    ? "text-destructive font-bold bg-destructive/10 px-1 py-0.5 rounded"
-                                    : "text-emerald-600 font-medium"
+                                    ? "text-destructive font-bold bg-destructive/10 px-2 py-0.5 rounded border border-destructive/20 inline-block"
+                                    : "text-emerald-600 dark:text-emerald-400 font-medium"
                                 }
                               >
                                 {instName}
                               </span>
                             ) : (
-                              <span className="text-muted-foreground italic">None</span>
+                              <span className="text-muted-foreground italic font-sans">None</span>
                             )}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="text-foreground">
                             {fields.certificateNumber ||
                               fields.applicationNumber ||
                               "-"}
                           </TableCell>
-                          <TableCell>{fields.issueDate || "-"}</TableCell>
-                          <TableCell>{fields.expiryDate || "-"}</TableCell>
-                          <TableCell className="font-sans">{fields.issuingAuthority || "-"}</TableCell>
+                          <TableCell className="text-foreground">{fields.issueDate || "-"}</TableCell>
+                          <TableCell className="text-foreground">{fields.expiryDate || "-"}</TableCell>
+                          <TableCell className="font-sans text-muted-foreground pr-4">{fields.issuingAuthority || "-"}</TableCell>
                         </TableRow>
                       );
                     })}
@@ -371,13 +395,18 @@ export default function ApplicationDetailPage({
 
             {/* Tab 3: Documents and Raw Extracted Text */}
             <TabsContent value="documents" className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  Attached Credentials ({app.documents.length})
-                </h3>
-                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold rounded-md shadow-2xs transition">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                    Attached Statutory Credentials ({app.documents.length})
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Original files uploaded by the institution with cryptographic verification digests and OCR text.
+                  </p>
+                </div>
+                <label className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground hover:bg-primary/90 text-xs font-semibold rounded-md shadow-2xs transition self-start sm:self-auto">
                   <Upload className="h-3.5 w-3.5" />
-                  <span>{uploadingFiles ? "Uploading..." : "Attach File"}</span>
+                  <span>{uploadingFiles ? "Processing Document..." : "Upload Additional Document"}</span>
                   <input
                     type="file"
                     multiple
@@ -388,64 +417,88 @@ export default function ApplicationDetailPage({
                 </label>
               </div>
 
-              <div className="space-y-3">
-                {app.documents.map((doc) => (
-                  <Card key={doc.id} className="shadow-xs p-4 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2.5">
-                        <FileText className="h-5 w-5 text-muted-foreground" />
-                        <div>
-                          <div className="font-bold text-xs text-foreground font-sans">
-                            {doc.originalFilename}
+              {app.documents.length === 0 ? (
+                <div className="p-8 text-center bg-card rounded-lg border border-border">
+                  <FileText className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="font-semibold text-xs text-foreground">No documents attached yet</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5 prose-readable mx-auto">
+                    Upload statutory PDFs or scanned images to extract credentials and execute compliance validation.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {app.documents.map((doc) => (
+                    <Card key={doc.id} className="shadow-xs p-4 space-y-3 border-border">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2 border-b border-border">
+                        <div className="flex items-center space-x-2.5">
+                          <div className="h-8 w-8 rounded bg-muted/60 flex items-center justify-center shrink-0">
+                            <FileText className="h-4 w-4 text-primary" />
                           </div>
-                          <div className="text-[11px] text-muted-foreground font-mono">
-                            Category: {doc.category} • Size: {(doc.sizeBytes / 1024).toFixed(1)} KB • Hash: {doc.sha256Hash.substring(0, 16)}...
+                          <div>
+                            <div className="font-bold text-xs text-foreground font-sans">
+                              {doc.originalFilename}
+                            </div>
+                            <div className="text-[11px] text-muted-foreground font-mono">
+                              Category: <span className="font-semibold text-foreground">{doc.category}</span> • Size: {(doc.sizeBytes / 1024).toFixed(1)} KB • SHA-256: {doc.sha256Hash.substring(0, 16)}...
+                            </div>
                           </div>
                         </div>
+                        <div className="flex items-center gap-2">
+                          {doc.provenance?.provider && (
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-muted text-muted-foreground border border-border">
+                              Engine: {doc.provenance.provider}
+                            </span>
+                          )}
+                          <Badge
+                            variant={doc.extractionStatus === "SUCCESS" ? "outline" : "destructive"}
+                            className="font-mono text-[10px]"
+                          >
+                            {doc.extractionStatus === "SUCCESS" ? "Parsed Successfully" : "Extraction Failed"}
+                          </Badge>
+                        </div>
                       </div>
-                      <Badge
-                        variant={doc.extractionStatus === "SUCCESS" ? "outline" : "destructive"}
-                        className="font-mono text-[10px]"
-                      >
-                        {doc.extractionStatus}
-                      </Badge>
-                    </div>
 
-                    <div>
-                      <div className="text-[10px] font-mono font-bold text-muted-foreground uppercase mb-1">
-                        Raw Text Content:
+                      <div>
+                        <div className="text-[10px] font-mono font-bold text-muted-foreground uppercase mb-1">
+                          Extracted Text Content:
+                        </div>
+                        <div className="p-3 bg-muted/30 border border-border rounded-md text-[11px] font-mono text-foreground max-h-32 overflow-y-auto whitespace-pre-wrap leading-relaxed">
+                          {doc.extractedText || "No readable text was detected in this file. If this is a password-protected PDF or blurred image, please re-upload a clear unencrypted copy."}
+                        </div>
                       </div>
-                      <div className="p-2.5 bg-muted/30 border border-border rounded-md text-[11px] font-mono text-foreground max-h-28 overflow-y-auto whitespace-pre-wrap">
-                        {doc.extractedText || "(No readable text detected)"}
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
 
             {/* Tab 4: Reviewer Action */}
             <TabsContent value="review" className="max-w-xl space-y-4">
-              <div className="bg-muted/40 p-3 rounded-md border border-border text-xs text-muted-foreground leading-relaxed">
-                <span className="font-bold text-foreground">Scrutiny Requirement:</span> Record justification notes for every adverse determination or clarification request.
+              <div className="bg-muted/30 p-3.5 rounded-lg border border-border text-xs text-muted-foreground prose-readable">
+                <p className="font-semibold text-foreground">Scrutiny Adjudication Guidelines</p>
+                <p className="mt-1 text-[11px] leading-relaxed">
+                  Decisions recorded here become an immutable part of the statutory audit trail. Adverse determinations or requests for clarification must cite specific document discrepancies and AICTE Approval Process Handbook (APH) clauses.
+                </p>
               </div>
 
-              <form onSubmit={handleReviewAction} className="space-y-3">
+              <form onSubmit={handleReviewAction} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-foreground mb-1">
-                    Officer Identity *
+                  <label htmlFor="officer-name" className="block text-xs font-semibold text-foreground mb-1.5">
+                    Scrutiny Officer Name & Designation *
                   </label>
                   <Input
+                    id="officer-name"
                     required
                     value={reviewerName}
                     onChange={(e) => setReviewerName(e.target.value)}
                     className="text-xs h-9"
+                    placeholder="e.g. Dr. R. K. Verma (Senior Review Officer)"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-foreground mb-1">
-                    Determination Action *
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">
+                    Adjudication Determination *
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <Button
@@ -453,7 +506,7 @@ export default function ApplicationDetailPage({
                       variant={selectedAction === "APPROVE" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("APPROVE")}
-                      className="text-xs"
+                      className="text-xs h-9 font-semibold"
                     >
                       Approve
                     </Button>
@@ -462,16 +515,16 @@ export default function ApplicationDetailPage({
                       variant={selectedAction === "REQUEST_CLARIFICATION" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("REQUEST_CLARIFICATION")}
-                      className="text-xs"
+                      className="text-xs h-9 font-semibold"
                     >
-                      Clarification
+                      Clarify
                     </Button>
                     <Button
                       type="button"
                       variant={selectedAction === "ESCALATE" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("ESCALATE")}
-                      className="text-xs"
+                      className="text-xs h-9 font-semibold"
                     >
                       Escalate
                     </Button>
@@ -480,7 +533,7 @@ export default function ApplicationDetailPage({
                       variant={selectedAction === "REJECT" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("REJECT")}
-                      className="text-xs"
+                      className="text-xs h-9 font-semibold"
                     >
                       Reject
                     </Button>
@@ -488,26 +541,26 @@ export default function ApplicationDetailPage({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-foreground mb-1">
-                    Justification Notes *
+                  <label htmlFor="action-notes" className="block text-xs font-semibold text-foreground mb-1.5">
+                    Official Justification & Decision Notes *
                   </label>
                   <textarea
+                    id="action-notes"
                     rows={3}
                     required
-                    placeholder="State the regulatory grounds and referenced document pages..."
+                    placeholder="Enter factual grounds for this determination and reference relevant certificate pages..."
                     value={actionNotes}
                     onChange={(e) => setActionNotes(e.target.value)}
-                    className="w-full text-xs p-2.5 rounded-md border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                    className="w-full text-xs p-3 rounded-md border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring leading-relaxed"
                   ></textarea>
                 </div>
 
                 <Button
                   type="submit"
                   disabled={isSubmittingReview}
-                  size="sm"
-                  className="font-semibold text-xs shadow-2xs"
+                  className="font-semibold text-xs h-9 px-4 shadow-2xs"
                 >
-                  {isSubmittingReview ? "Recording..." : "Record Official Determination"}
+                  {isSubmittingReview ? "Saving Decision..." : "Submit Official Adjudication"}
                 </Button>
               </form>
 

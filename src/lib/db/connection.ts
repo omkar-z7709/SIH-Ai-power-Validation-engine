@@ -25,6 +25,10 @@ if (!global.mongooseCache) {
   global.mongooseCache = cached;
 }
 
+export function getStorageMode(): "mongodb" | "memory" {
+  return cached.conn ? "mongodb" : "memory";
+}
+
 export async function connectDB(): Promise<typeof mongoose | null> {
   if (cached.conn) {
     return cached.conn;

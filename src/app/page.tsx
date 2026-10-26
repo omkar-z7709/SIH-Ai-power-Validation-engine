@@ -67,12 +67,12 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* Overview Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Scrutiny Studio
+            Compliance Scrutiny Studio
           </h1>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5 prose-readable">
             Automated scrutiny of institutional credentials, cross-document discrepancies, and officer review queue.
           </p>
         </div>
@@ -82,17 +82,18 @@ export default function DashboardPage() {
             size="sm"
             onClick={handleSeedDemo}
             disabled={seeding}
-            className="text-xs font-semibold gap-1.5 shadow-2xs"
+            className="text-xs font-semibold gap-1.5 h-8"
           >
             <Database className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>{seeding ? "Loading..." : "Seed 6 Test Scenarios"}</span>
+            <span>{seeding ? "Seeding..." : "Load 6 Sample Cases"}</span>
           </Button>
           <Button
             variant="outline"
             size="icon"
             onClick={() => refetch()}
-            className="h-8 w-8 shadow-2xs"
-            title="Refresh records"
+            className="h-8 w-8"
+            title="Refresh application data"
+            aria-label="Refresh application data"
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>

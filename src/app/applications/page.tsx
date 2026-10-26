@@ -44,17 +44,17 @@ export default function ApplicationsPage() {
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-md bg-primary text-primary-foreground hover:bg-primary/90 shadow-2xs transition"
         >
           <Plus className="h-3.5 w-3.5" />
-          <span>New Intake</span>
+          <span>New Submission</span>
         </Link>
       </div>
 
       {/* Filter and Search Bar */}
-      <Card className="shadow-xs">
-        <CardContent className="p-3 flex flex-col md:flex-row gap-3 items-center justify-between">
+      <Card className="shadow-xs border-border">
+        <CardContent className="p-3.5 flex flex-col md:flex-row gap-3 items-center justify-between">
           <div className="relative w-full md:w-80">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search by institution, ID, or state..."
+              placeholder="Search by institution name, ref ID, or state..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-8 text-xs h-9"
@@ -62,12 +62,12 @@ export default function ApplicationsPage() {
           </div>
 
           <div className="flex items-center space-x-2 w-full md:w-auto">
-            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="text-xs font-semibold text-muted-foreground">Filter:</span>
+            <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="text-xs font-semibold text-muted-foreground shrink-0">Filter:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="text-xs rounded-md border border-input bg-card py-1.5 px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono"
+              className="text-xs rounded-md border border-input bg-card py-1.5 px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono h-9"
             >
               <option value="ALL">All Submissions ({apps.length})</option>
               <option value="PASSED_INITIAL_CHECKS">Passed Checks</option>
@@ -83,30 +83,49 @@ export default function ApplicationsPage() {
       </Card>
 
       {/* Data Table */}
-      <Card className="shadow-xs overflow-hidden">
+      <Card className="shadow-xs overflow-hidden border-border">
         <Table>
-          <TableHeader className="bg-muted/30">
+          <TableHeader className="bg-muted/40 border-b border-border">
             <TableRow>
-              <TableHead className="text-xs font-bold">Reference ID</TableHead>
-              <TableHead className="text-xs font-bold">Institution Name</TableHead>
-              <TableHead className="text-xs font-bold">Type & State</TableHead>
-              <TableHead className="text-xs font-bold">Documents</TableHead>
-              <TableHead className="text-xs font-bold">Findings</TableHead>
-              <TableHead className="text-xs font-bold">Status</TableHead>
-              <TableHead className="text-xs font-bold text-right">Actions</TableHead>
+              <TableHead className="text-xs font-semibold py-3 pl-4">Reference ID</TableHead>
+              <TableHead className="text-xs font-semibold py-3">Institution Name</TableHead>
+              <TableHead className="text-xs font-semibold py-3">Type & State</TableHead>
+              <TableHead className="text-xs font-semibold py-3">Documents</TableHead>
+              <TableHead className="text-xs font-semibold py-3">Findings</TableHead>
+              <TableHead className="text-xs font-semibold py-3">Status</TableHead>
+              <TableHead className="text-xs font-semibold py-3 text-right pr-4">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="text-xs">
             {loading ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground font-mono">
-                  Loading records...
+                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground text-xs">
+                  <div className="flex flex-col items-center justify-center space-y-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-primary border-t-transparent animate-spin inline-block"></span>
+                    <span>Loading institutional submissions...</span>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : filteredApps.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-8 text-center text-muted-foreground font-mono">
-                  No matching applications found.
+                <TableCell colSpan={7} className="py-12 text-center text-muted-foreground text-xs">
+                  <p className="font-semibold text-foreground">No matching applications found</p>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Try adjusting your search terms or clearing the status filter.
+                  </p>
+                  {(search || statusFilter !== "ALL") && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearch("");
+                        setStatusFilter("ALL");
+                      }}
+                      className="mt-3 text-xs h-7"
+                    >
+                      Reset Filters
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ) : (

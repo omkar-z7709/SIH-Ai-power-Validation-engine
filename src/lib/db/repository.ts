@@ -1,11 +1,14 @@
 import { ApplicationRecord } from "@/types";
-import { connectDB } from "./connection";
+import { connectDB, getStorageMode } from "./connection";
 import { ApplicationModel } from "@/models/Application";
 
 // In-memory fallback repository when MongoDB server is not running locally
 const memoryStore = new Map<string, ApplicationRecord>();
 
 export class ApplicationRepository {
+  static getStorageMode(): "mongodb" | "memory" {
+    return getStorageMode();
+  }
   static async getAll(): Promise<ApplicationRecord[]> {
     const db = await connectDB();
     if (db) {
