@@ -210,14 +210,19 @@ export default function NewApplicationPage() {
                 <p className="text-[11px] text-muted-foreground mt-1 prose-readable mx-auto">
                   Accepted formats: Digital PDF, Scanned Image PDF, PNG, JPG (up to 10MB per document).
                 </p>
-                <label className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md border border-input bg-card hover:bg-muted text-foreground transition shadow-2xs cursor-pointer">
+                <label
+                  htmlFor="file-upload-input"
+                  className="mt-3.5 inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold rounded-md border border-input bg-card hover:bg-muted text-foreground transition shadow-2xs cursor-pointer focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:outline-hidden"
+                >
                   <span>Browse Local Documents</span>
                   <input
+                    id="file-upload-input"
                     type="file"
                     multiple
                     accept=".pdf,image/png,image/jpeg"
                     onChange={handleFileChange}
-                    className="hidden"
+                    className="sr-only"
+                    aria-label="Upload statutory document files"
                   />
                 </label>
               </div>

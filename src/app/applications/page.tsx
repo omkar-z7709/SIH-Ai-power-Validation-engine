@@ -52,8 +52,10 @@ export default function ApplicationsPage() {
       <Card className="shadow-xs border-border">
         <CardContent className="p-3.5 flex flex-col md:flex-row gap-3 items-center justify-between">
           <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-muted-foreground" aria-hidden="true" />
             <Input
+              id="applications-search-input"
+              aria-label="Search applications by institution name, reference ID, or state"
               placeholder="Search by institution name, ref ID, or state..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -62,9 +64,13 @@ export default function ApplicationsPage() {
           </div>
 
           <div className="flex items-center space-x-2 w-full md:w-auto">
-            <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className="text-xs font-semibold text-muted-foreground shrink-0">Filter:</span>
+            <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" aria-hidden="true" />
+            <label htmlFor="applications-status-filter" className="text-xs font-semibold text-muted-foreground shrink-0">
+              Filter by Status:
+            </label>
             <select
+              id="applications-status-filter"
+              aria-label="Filter applications by review status"
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               className="text-xs rounded-md border border-input bg-card py-1.5 px-2.5 text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono h-9"

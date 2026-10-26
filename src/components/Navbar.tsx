@@ -12,6 +12,7 @@ import {
   LogOut,
   User,
   LogIn,
+  Compass,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -91,6 +92,14 @@ export function Navbar() {
             >
               <ShieldAlert className="h-3.5 w-3.5" />
               <span>Review Queue</span>
+            </Link>
+
+            <Link
+              href="/map"
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-md hover:text-foreground hover:bg-muted transition font-medium"
+            >
+              <Compass className="h-3.5 w-3.5 text-primary" />
+              <span>Regional Radar</span>
             </Link>
 
             <Link

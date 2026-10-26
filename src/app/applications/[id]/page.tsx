@@ -40,6 +40,12 @@ export default function ApplicationDetailPage({
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
 
+  // Dismiss Finding Dialog State
+  const [dismissingFinding, setDismissingFinding] = useState<{ id: string; title: string } | null>(null);
+  const [dismissReason, setDismissReason] = useState("");
+  const [isSubmittingDismiss, setIsSubmittingDismiss] = useState(false);
+  const [dismissError, setDismissError] = useState<string | null>(null);
+
   const handleReviewAction = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!app || !actionNotes.trim()) return;
@@ -77,10 +83,22 @@ export default function ApplicationDetailPage({
     }
   };
 
-  const handleDismissFinding = async (findingId: string) => {
-    if (!app) return;
-    const reason = prompt("Enter official reason for acknowledging or dismissing this finding:");
-    if (!reason) return;
+  const openDismissDialog = (finding: { id: string; title: string }) => {
+    setDismissingFinding(finding);
+    setDismissReason("");
+    setDismissError(null);
+  };
+
+  const submitDismissFinding = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!app || !dismissingFinding) return;
+    if (!dismissReason.trim()) {
+      setDismissError("Please provide an official justification note.");
+      return;
+    }
+
+    setIsSubmittingDismiss(true);
+    setDismissError(null);
 
     try {
       const res = await fetch(`/api/applications/${app.id}/review`, {
@@ -91,16 +109,22 @@ export default function ApplicationDetailPage({
           reviewerId: "REV_OFFICER_01",
           reviewerName,
           action: "DISMISS_FLAG",
-          notes: reason,
-          targetFindingId: findingId,
+          notes: dismissReason.trim(),
+          targetFindingId: dismissingFinding.id,
         }),
       });
       const data = await res.json();
       if (data.success) {
         setDetailData(app.id, data.data);
+        setDismissingFinding(null);
+        setDismissReason("");
+      } else {
+        setDismissError(data.error || "Failed to dismiss violation.");
       }
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      setDismissError(err.message || "Failed to submit request.");
+    } finally {
+      setIsSubmittingDismiss(false);
     }
   };
 
@@ -279,9 +303,10 @@ export default function ApplicationDetailPage({
 
                       {!finding.dismissed && (
                         <Button
+                          type="button"
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDismissFinding(finding.id)}
+                          onClick={() => openDismissDialog({ id: finding.id, title: finding.title })}
                           className="text-[11px] h-8 shrink-0 border-dashed hover:border-solid hover:bg-muted"
                         >
                           Waive Violation
@@ -496,13 +521,15 @@ export default function ApplicationDetailPage({
                   />
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-foreground mb-1.5">
+                <fieldset className="space-y-1.5" role="radiogroup" aria-labelledby="adjudication-legend">
+                  <legend id="adjudication-legend" className="block text-xs font-semibold text-foreground">
                     Adjudication Determination *
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  </legend>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
                     <Button
                       type="button"
+                      role="radio"
+                      aria-checked={selectedAction === "APPROVE"}
                       variant={selectedAction === "APPROVE" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("APPROVE")}
@@ -512,6 +539,8 @@ export default function ApplicationDetailPage({
                     </Button>
                     <Button
                       type="button"
+                      role="radio"
+                      aria-checked={selectedAction === "REQUEST_CLARIFICATION"}
                       variant={selectedAction === "REQUEST_CLARIFICATION" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("REQUEST_CLARIFICATION")}
@@ -521,6 +550,8 @@ export default function ApplicationDetailPage({
                     </Button>
                     <Button
                       type="button"
+                      role="radio"
+                      aria-checked={selectedAction === "ESCALATE"}
                       variant={selectedAction === "ESCALATE" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("ESCALATE")}
@@ -530,6 +561,8 @@ export default function ApplicationDetailPage({
                     </Button>
                     <Button
                       type="button"
+                      role="radio"
+                      aria-checked={selectedAction === "REJECT"}
                       variant={selectedAction === "REJECT" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setSelectedAction("REJECT")}
@@ -538,7 +571,7 @@ export default function ApplicationDetailPage({
                       Reject
                     </Button>
                   </div>
-                </div>
+                </fieldset>
 
                 <div>
                   <label htmlFor="action-notes" className="block text-xs font-semibold text-foreground mb-1.5">
@@ -614,6 +647,78 @@ export default function ApplicationDetailPage({
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Accessible In-App Waiver / Dismissal Dialog */}
+      {dismissingFinding && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="waiver-dialog-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-xs animate-in fade-in-0"
+        >
+          <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6 shadow-lg space-y-4">
+            <div className="space-y-1">
+              <h2 id="waiver-dialog-title" className="text-base font-bold text-foreground">
+                Waive Regulatory Violation
+              </h2>
+              <p className="text-xs text-muted-foreground prose-readable">
+                Record an official justification for overriding this finding. This action will be immutably recorded in the statutory audit trail.
+              </p>
+            </div>
+
+            <div className="p-3 bg-muted/30 rounded-md border border-border text-xs text-foreground font-medium">
+              <span className="text-muted-foreground text-[11px] block font-mono uppercase mb-0.5">Target Violation</span>
+              {dismissingFinding.title}
+            </div>
+
+            {dismissError && (
+              <div className="p-2.5 bg-destructive/10 border border-destructive/20 text-destructive text-xs rounded-md">
+                {dismissError}
+              </div>
+            )}
+
+            <form onSubmit={submitDismissFinding} className="space-y-4">
+              <div>
+                <label htmlFor="dismiss-reason-input" className="block text-xs font-semibold text-foreground mb-1.5">
+                  Official Justification & Governing Handbook Clause *
+                </label>
+                <textarea
+                  id="dismiss-reason-input"
+                  required
+                  rows={3}
+                  value={dismissReason}
+                  onChange={(e) => setDismissReason(e.target.value)}
+                  placeholder="e.g. Verified valid trustee resolution and state gazette notification approving entity name amendment."
+                  className="w-full text-xs p-3 rounded-md border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring leading-relaxed"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-border">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDismissingFinding(null);
+                    setDismissReason("");
+                    setDismissError(null);
+                  }}
+                  className="text-xs h-9"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSubmittingDismiss}
+                  className="text-xs h-9 font-semibold shadow-2xs"
+                >
+                  {isSubmittingDismiss ? "Recording Waiver..." : "Confirm & Record Waiver"}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

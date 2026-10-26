@@ -54,6 +54,12 @@ next-env.d.ts
 /test-docs/
 *.log
 
+# downloaded / mirrored external skills
+/.agents/
+/.claude/
+/agent/
+skills-lock.json
+
 # ide and tools
 .vscode/
 .idea/
