@@ -9,9 +9,10 @@ import { InstitutionModel } from "@/models/Institution";
 import { hashPassword } from "@/lib/auth/session";
 
 export async function POST() {
-  if (process.env.NODE_ENV === "production") {
+  // Allow demo seeding in local dev or explicit demo environment
+  if (process.env.NODE_ENV === "production" && process.env.ALLOW_DEMO_SEED !== "true") {
     return NextResponse.json(
-      { success: false, error: "Demo seed is disabled in production" },
+      { success: false, error: "Demo seed is disabled in production without ALLOW_DEMO_SEED=true" },
       { status: 403 }
     );
   }
@@ -53,6 +54,9 @@ export async function POST() {
     const officerHash = await hashPassword(officerPass);
     const adminHash = await hashPassword(adminPass);
 
+    const seniorOfficerHash = await hashPassword(process.env.DEFAULT_SENIOR_OFFICER_PASSWORD || "Senior@123456");
+    const collegeStaffHash = await hashPassword(process.env.DEFAULT_STAFF_PASSWORD || "Staff@123456");
+
     const demoUsers = [
       {
         email: (process.env.DEFAULT_COLLEGE_EMAIL || "college@apex.edu.in").toLowerCase(),
@@ -66,10 +70,31 @@ export async function POST() {
         updatedAt: isoNow,
       },
       {
+        email: "staff@apex.edu.in",
+        name: "Ananya Sharma (Institutional Staff)",
+        passwordHash: collegeStaffHash,
+        role: "COLLEGE_STAFF",
+        institutionId: demoInstitutionId,
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
         email: (process.env.DEFAULT_OFFICER_EMAIL || "officer@aicte.gov.in").toLowerCase(),
-        name: "Dr. R. K. Verma (Senior Review Officer)",
+        name: "Dr. R. K. Verma (First Scrutiny Officer)",
         passwordHash: officerHash,
         role: "REVIEW_OFFICER",
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
+        email: "senior.officer@aicte.gov.in",
+        name: "Dr. S. K. Sen (Senior Appellate Officer)",
+        passwordHash: seniorOfficerHash,
+        role: "SENIOR_OFFICER",
         isActive: true,
         isVerified: true,
         createdAt: isoNow,
