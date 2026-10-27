@@ -21,6 +21,7 @@ export default function OfficerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let isMounted = true;
     async function loadData() {
       try {
         const [countsRes, appsRes] = await Promise.all([
@@ -29,15 +30,20 @@ export default function OfficerDashboard() {
         ]);
         const countsData = await countsRes.json();
         const appsData = await appsRes.json();
-        if (countsData.success) setCounts(countsData.data);
-        if (appsData.success) setApps(appsData.data);
+        if (isMounted) {
+          if (countsData.success) setCounts(countsData.data);
+          if (appsData.success) setApps(appsData.data);
+        }
       } catch (e) {
         console.error(e);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
     loadData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

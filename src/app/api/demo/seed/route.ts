@@ -437,18 +437,21 @@ export async function POST() {
         updatedAt: isoNow,
       };
 
+      // Deterministic rules execution
       const { findings, computedStatus } = runDeterministicValidation(newApp);
       newApp.allFindings = findings;
       newApp.status = computedStatus;
 
-      const jevResult = await jevAdapter.getDecisionSupport({
-        institutionName: newApp.institutionName,
-        referenceId: newApp.referenceId,
-        documentCount: newApp.documents.length,
-        deterministicFindings: findings,
-        extractedSummary: {},
-      });
-      newApp.jevDecision = jevResult;
+      // Provide fast local decision payload without network delays during seeding
+      newApp.jevDecision = {
+        usedModel: "Deterministic Rules Engine (Jev Scrutiny Mode)",
+        proposedStatus: computedStatus,
+        reviewPriority: computedStatus === "PASSED_INITIAL_CHECKS" ? "LOW" : "URGENT",
+        recommendedNextStep: findings.length > 0 ? findings[0].suggestedAction : "Proceed with statutory verification.",
+        advisoryNotes: "Calibrated deterministic baseline for institutional scrutiny.",
+        timestamp: isoNow,
+        isRuleBasedFallback: true,
+      };
 
       await ApplicationRepository.save(newApp);
       seededApps.push(newApp);

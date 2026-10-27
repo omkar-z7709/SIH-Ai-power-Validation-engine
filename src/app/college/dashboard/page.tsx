@@ -15,6 +15,7 @@ export default function CollegeDashboard() {
   const [storageMode, setStorageMode] = useState<string>("mongodb");
 
   useEffect(() => {
+    let isMounted = true;
     async function loadData() {
       try {
         const [meRes, appsRes] = await Promise.all([
@@ -23,15 +24,20 @@ export default function CollegeDashboard() {
         ]);
         const meData = await meRes.json();
         const appsData = await appsRes.json();
-        if (meData.success) setUser(meData.data);
-        if (appsData.success) setApps(appsData.data);
+        if (isMounted) {
+          if (meData.success) setUser(meData.data);
+          if (appsData.success) setApps(appsData.data);
+        }
       } catch (e) {
         console.error(e);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     }
     loadData();
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   return (

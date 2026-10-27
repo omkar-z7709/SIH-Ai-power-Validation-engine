@@ -68,7 +68,7 @@ export class JevDecisionAdapter {
   }
 
   async getDecisionSupport(request: JevDecisionRequest): Promise<JevDecisionResponse> {
-    // 1. If OpenRouter Key is configured, use OpenRouter AI decision model
+    // 1. If OpenRouter Key is configured, use OpenRouter AI decision model with rapid timeout
     if (this.openRouterKey && this.openRouterKey.startsWith("sk-or-")) {
       try {
         const prompt = `You are a strict institutional scrutiny decision system for AICTE.
@@ -99,10 +99,10 @@ Return ONLY a valid JSON object matching this structure:
             Authorization: `Bearer ${this.openRouterKey}`,
           },
           body: JSON.stringify({
-            model: "recursive/flint-v1.0:free",
+            model: "qwen/qwen3-vl-8b-instruct",
             messages: [{ role: "user", content: prompt }],
           }),
-          signal: AbortSignal.timeout(6000),
+          signal: AbortSignal.timeout(2500), // Strict 2.5s timeout prevents blocking page load
         });
 
         if (res.ok) {
