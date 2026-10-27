@@ -64,71 +64,17 @@ export function generateApplicationJson(app: ApplicationRecord): string {
   return JSON.stringify(app, null, 2);
 }
 
-export function generateApplicationPdf(app: ApplicationRecord): Buffer {
-  const lines: string[] = [
-    "AICTE SCRUTINY AUDIT REPORT",
-    "==================================================",
-    `Institution Name:   ${app.institutionName}`,
-    `Reference ID:       ${app.referenceId}`,
-    `Academic Year:      ${app.academicYear}`,
-    `Application Type:   ${app.applicationType.replace(/_/g, " ")}`,
-    `Current Status:     ${app.status}`,
-    `Report Generated:   ${new Date().toISOString()}`,
-    "--------------------------------------------------",
-    "SUBMITTED STATUTORY CREDENTIALS:",
-  ];
-
-  if (app.documents.length === 0) {
-    lines.push("  - No documents attached.");
-  } else {
-    for (const doc of app.documents) {
-      lines.push(`  * ${doc.originalFilename} [${doc.category}]`);
-      lines.push(`    Status: ${doc.extractionStatus} | SHA256: ${doc.sha256Hash.substring(0, 16)}...`);
-      if (doc.extractedFields?.institutionName) {
-        lines.push(`    Extracted Entity: ${doc.extractedFields.institutionName}`);
-      }
-      if (doc.extractedFields?.certificateNumber) {
-        lines.push(`    Cert/Ref #: ${doc.extractedFields.certificateNumber}`);
-      }
-    }
-  }
-
-  lines.push("--------------------------------------------------");
-  lines.push("STATUTORY COMPLIANCE FINDINGS:");
-  if (app.allFindings.length === 0) {
-    lines.push("  - No statutory discrepancies identified. All checks passed.");
-  } else {
-    for (const f of app.allFindings) {
-      lines.push(`  [${f.severity}] ${f.title}`);
-      lines.push(`    Rule ID: ${f.ruleId} | Action: ${f.suggestedAction}`);
-      if (f.dismissed) {
-        lines.push(`    Status: DISMISSED BY OFFICER (${f.dismissalReason || "Justified"})`);
-      }
-    }
-  }
-
-  lines.push("--------------------------------------------------");
-  lines.push("OFFICER AUDIT HISTORY:");
-  if (app.reviews.length === 0) {
-    lines.push("  - Pending scrutiny adjudication.");
-  } else {
-    for (const r of app.reviews) {
-      lines.push(`  * ${r.timestamp} - ${r.reviewerName}: ${r.action} -> ${r.outcomeStatus}`);
-      if (r.notes) lines.push(`    Notes: ${r.notes}`);
-    }
-  }
-
-  lines.push("==================================================");
-  lines.push("CONFIDENTIAL & STATUTORY RECORD - AICTE SCRUTINY STUDIO");
-
-  // Format into valid PDF-1.4 binary structure
-  let stream = "BT /F1 9 Tf 40 760 Td\n";
+/**
+ * Creates a clean binary PDF stream containing full AI narrative synthesis
+ */
+export function buildTextPdfFromLines(lines: string[]): Buffer {
+  let stream = "BT /F1 9 Tf 36 765 Td\n";
   lines.forEach((line, i) => {
     const escaped = line.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
     if (i === 0) {
       stream += `(${escaped}) Tj\n`;
     } else {
-      stream += `0 -13 Td (${escaped}) Tj\n`;
+      stream += `0 -12 Td (${escaped}) Tj\n`;
     }
   });
   stream += "ET";
@@ -155,4 +101,79 @@ export function generateApplicationPdf(app: ApplicationRecord): Buffer {
   const startxref = offset;
   body += xref.join("") + "trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n" + startxref + "\n%%EOF";
   return Buffer.from(body);
+}
+
+export async function generateApplicationPdf(app: ApplicationRecord): Promise<Buffer> {
+  const { groupApplicationFindings, generateGeminiNarrative } = await import("../report/gemini-report");
+  const { groupedFindings, stats } = groupApplicationFindings(app);
+
+  const preparedData = {
+    institution: app.institutionName,
+    referenceId: app.referenceId,
+    academicYear: app.academicYear,
+    applicationType: app.applicationType,
+    currentStatus: app.status,
+    stats,
+    groupedFindings,
+  };
+
+  const { narrative, provenance } = await generateGeminiNarrative(preparedData);
+
+  const lines: string[] = [
+    "ALL INDIA COUNCIL FOR TECHNICAL EDUCATION (AICTE)",
+    "STATUTORY INSTITUTIONAL SCRUTINY & COMPLIANCE REPORT",
+    "================================================================================",
+    `INSTITUTION:       ${app.institutionName}`,
+    `REFERENCE ID:      ${app.referenceId}`,
+    `ACADEMIC CYCLE:    ${app.academicYear} | TYPE: ${app.applicationType.replace(/_/g, " ")}`,
+    `EXECUTIVE VERDICT: ${narrative.verdict} (Total Active Flags: ${stats.total})`,
+    `FLAG BREAKDOWN:    Tier 1 (Critical): ${stats.tier1} | Tier 2 (High): ${stats.tier2} | Tier 3 (Med): ${stats.tier3}`,
+    "--------------------------------------------------------------------------------",
+    "EXECUTIVE REGULATORY ASSESSMENT (Synthesized via " + provenance.model + "):",
+  ];
+
+  // Wrap executive summary lines
+  const summaryWords = narrative.executiveSummary.split(" ");
+  let cur = "  ";
+  for (const w of summaryWords) {
+    if ((cur + " " + w).length > 80) {
+      lines.push(cur);
+      cur = "  " + w;
+    } else {
+      cur += " " + w;
+    }
+  }
+  if (cur.trim().length > 0) lines.push(cur);
+
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push(`REGULATORY FINDINGS (${groupedFindings.length} Distinct Deduplicated Issues):`);
+
+  if (groupedFindings.length === 0) {
+    lines.push("  - Zero discrepancies detected. Application complies with statutory norms.");
+  } else {
+    for (const gf of groupedFindings) {
+      const nf = narrative.findings.find((f) => f.id === gf.id);
+      lines.push(`  * [${gf.severity}] ${gf.title} (${gf.ruleId})`);
+      lines.push(`    Detail: ${nf?.plainEnglish || gf.title}`);
+      lines.push(`    Action: ${nf?.recommendedAction || "Inspect with competent authority."}`);
+      lines.push(`    Affected Files: ${gf.affectedDocuments.join(", ")}`);
+    }
+  }
+
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("SUBMITTED CREDENTIALS AUDIT TRAIL:");
+  for (const doc of app.documents.slice(0, 5)) {
+    lines.push(`  - ${doc.originalFilename} [${doc.category}] SHA: ${doc.sha256Hash.substring(0, 16)}...`);
+  }
+
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("INSPECTION COMMITTEE CHECKLIST:");
+  for (const chk of narrative.officerChecklist.slice(0, 4)) {
+    lines.push(`  [ ] ${chk}`);
+  }
+
+  lines.push("================================================================================");
+  lines.push(`PROVENANCE: Engine: ${provenance.model} (${provenance.mode.toUpperCase()}) | Strict Rules v1.0`);
+
+  return buildTextPdfFromLines(lines);
 }

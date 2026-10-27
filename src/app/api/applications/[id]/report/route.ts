@@ -29,9 +29,29 @@ export async function GET(
       });
     }
 
+    if (format === "html") {
+      const { groupApplicationFindings, generateGeminiNarrative } = await import("@/lib/report/gemini-report");
+      const { renderScrutinyHtmlTemplate } = await import("@/lib/report/report-template");
+      const { groupedFindings, stats } = groupApplicationFindings(app);
+      const preparedData = {
+        institution: app.institutionName,
+        referenceId: app.referenceId,
+        academicYear: app.academicYear,
+        applicationType: app.applicationType,
+        currentStatus: app.status,
+        stats,
+        groupedFindings,
+      };
+      const { narrative, provenance } = await generateGeminiNarrative(preparedData);
+      const html = renderScrutinyHtmlTemplate(app, preparedData, narrative, provenance);
+      return new NextResponse(html, {
+        headers: { "Content-Type": "text/html; charset=utf-8" },
+      });
+    }
+
     if (format === "pdf") {
       const { generateApplicationPdf } = await import("@/lib/review/report-generator");
-      const pdfBuffer = generateApplicationPdf(app);
+      const pdfBuffer = await generateApplicationPdf(app);
       return new Response(pdfBuffer as any, {
         headers: {
           "Content-Type": "application/pdf",
