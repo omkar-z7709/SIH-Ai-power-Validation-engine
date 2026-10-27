@@ -2,6 +2,9 @@ import { IRule, RuleExecutionContext, RuleRegistry } from "./rule-registry";
 import { DocumentCategory, Finding, DocumentRecord } from "@/types";
 import { isDateInPast, isIssueAfterExpiry } from "./rule-helpers";
 import { compareEntitiesSemantically } from "./semantic-comparator";
+import { validateStatutoryDocumentMatrix } from "../documents/statutory-document-matrix";
+import { evaluateSpatialCompliance } from "./spatial-rules";
+import { calculateRiskScore } from "./risk-scoring";
 
 // 1. Tier 2: Mandatory AICTE Document Missing
 export class RequiredDocumentsRule implements IRule {
@@ -283,6 +286,39 @@ export class StatutoryVerificationRule implements IRule {
   }
 }
 
+// 9. Statutory 10-Document Matrix & Expiry Cascades
+export class StatutoryMatrixRule implements IRule {
+  id = "RULE_STATUTORY_MATRIX";
+  title = "Statutory Document Matrix & Temporal Expiry Cascades";
+  description = "Evaluates the 10 canonical statutory documents and 90d/60d/30d temporal expiry warnings.";
+
+  evaluate(context: RuleExecutionContext): Finding[] {
+    const { findings } = validateStatutoryDocumentMatrix(
+      context.documents,
+      context.referenceDate
+    );
+    return findings;
+  }
+}
+
+// 10. Spatial & Built-Up Area Norms
+export class SpatialNormsRule implements IRule {
+  id = "RULE_SPATIAL_INFRASTRUCTURE";
+  title = "Spatial & Built-Up Area Infrastructure Norms";
+  description = "Computes TBUA, circulation area, allied lab sharing limits, and parcel contiguity.";
+
+  evaluate(context: RuleExecutionContext): Finding[] {
+    if (!context.application?.spatialBreakdown) {
+      return [];
+    }
+    const result = evaluateSpatialCompliance(
+      context.application.spatialBreakdown,
+      context.application.id
+    );
+    return result.findings;
+  }
+}
+
 export function createDefaultRuleRegistry(): RuleRegistry {
   const registry = new RuleRegistry();
   registry
@@ -293,7 +329,9 @@ export function createDefaultRuleRegistry(): RuleRegistry {
     .register(new ReferenceNumberConsistencyRule())
     .register(new CertificateValidityRule())
     .register(new DateChronologyRule())
-    .register(new StatutoryVerificationRule());
+    .register(new StatutoryVerificationRule())
+    .register(new StatutoryMatrixRule())
+    .register(new SpatialNormsRule());
   return registry;
 }
 
@@ -303,9 +341,16 @@ export function runDeterministicValidation(
   app: any,
   referenceDate: Date = new Date()
 ) {
-  return defaultRuleRegistry.evaluateAll({
+  const result = defaultRuleRegistry.evaluateAll({
     application: app,
     documents: app.documents || [],
     referenceDate,
   });
+
+  const riskAssessment = calculateRiskScore(app, result.findings);
+
+  return {
+    ...result,
+    riskAssessment,
+  };
 }

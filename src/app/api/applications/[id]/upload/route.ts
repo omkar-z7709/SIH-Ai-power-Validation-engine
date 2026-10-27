@@ -93,9 +93,10 @@ export async function POST(
     }
 
     // Re-run validation rules on updated document list
-    const { findings, computedStatus } = runDeterministicValidation(app);
+    const { findings, computedStatus, riskAssessment } = runDeterministicValidation(app);
     app.allFindings = findings;
     app.status = computedStatus;
+    app.riskAssessment = riskAssessment;
 
     // Refresh decision support
     const jevResult = await jevAdapter.getDecisionSupport({

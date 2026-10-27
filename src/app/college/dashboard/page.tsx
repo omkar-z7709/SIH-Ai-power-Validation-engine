@@ -16,6 +16,8 @@ import {
   Info,
   BadgeAlert,
   GraduationCap,
+  AlertTriangle,
+  CalendarClock,
 } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -23,6 +25,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useApplications, useCurrentUser } from "@/lib/hooks/use-applications";
+import { calculateRiskScore } from "@/lib/rules/risk-scoring";
+import { evaluateDocumentExpiry, ExpiryAlert } from "@/lib/documents/statutory-document-matrix";
 
 export default function CollegeDashboard() {
   const { data: user, isLoading: userLoading } = useCurrentUser();
@@ -71,6 +75,13 @@ export default function CollegeDashboard() {
         appId: app.id || app.referenceId,
         appName: app.institutionName,
       }))
+  );
+
+  // Proactive temporal expiry monitoring (90d, 60d, 30d cascades)
+  const allExpiryAlerts: ExpiryAlert[] = apps.flatMap((app) =>
+    (app.documents || [])
+      .map((doc) => evaluateDocumentExpiry(doc))
+      .filter((alert): alert is ExpiryAlert => alert !== null && alert.alertSeverity !== "NONE")
   );
 
   const getSeverityBadge = (severity: string) => {
@@ -136,6 +147,46 @@ export default function CollegeDashboard() {
           )}
         </div>
       </div>
+
+      {/* Proactive Temporal Expiry Alert Cascade (90d / 60d / 30d monitoring) */}
+      {allExpiryAlerts.length > 0 && (
+        <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 space-y-2.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-amber-500" />
+              <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                Proactive Statutory Clearance Expiry Monitor ({allExpiryAlerts.length} Alert{allExpiryAlerts.length > 1 ? "s" : ""})
+              </span>
+            </div>
+            <Badge variant="outline" className="text-[10px] font-mono border-amber-500/40 text-amber-700 dark:text-amber-300">
+              APH Automated Watchdog
+            </Badge>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
+            {allExpiryAlerts.map((alert, idx) => (
+              <div
+                key={idx}
+                className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-card/80 border border-border/70"
+              >
+                <div>
+                  <p className="font-semibold text-foreground">{alert.documentFilename}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{alert.message}</p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    alert.alertLevel === "CRITICAL_30_DAYS" || alert.alertLevel === "EXPIRED"
+                      ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30 text-[10px] shrink-0"
+                      : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 text-[10px] shrink-0"
+                  }
+                >
+                  {alert.alertLevel.replace(/_/g, " ")}
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Scoped KPI Strip (Own Institution Only) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -220,6 +271,7 @@ export default function CollegeDashboard() {
                 <TableHead>Academic Year</TableHead>
                 <TableHead>Application Type</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Risk Index (S_risk)</TableHead>
                 <TableHead>Active Findings</TableHead>
                 <TableHead className="text-right pr-4">Action</TableHead>
               </TableRow>
@@ -227,13 +279,13 @@ export default function CollegeDashboard() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-8 text-xs text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-8 text-xs text-muted-foreground">
                     Loading your institutional applications...
                   </TableCell>
                 </TableRow>
               ) : apps.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-10 text-xs text-muted-foreground">
+                  <TableCell colSpan={7} className="text-center py-10 text-xs text-muted-foreground">
                     <div className="max-w-sm mx-auto space-y-2">
                       <p className="font-semibold text-foreground">No applications found</p>
                       <p className="text-[11px]">
@@ -245,6 +297,14 @@ export default function CollegeDashboard() {
               ) : (
                 apps.map((app) => {
                   const activeCount = (app.allFindings || []).filter((f: any) => !f.dismissed).length;
+                  const risk = app.riskAssessment || calculateRiskScore(app);
+                  const riskColor =
+                    risk.riskTier === "HIGH_RISK"
+                      ? "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/30"
+                      : risk.riskTier === "MEDIUM_RISK"
+                      ? "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                      : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30";
+
                   return (
                     <TableRow key={app.id} className="text-xs hover:bg-muted/40 transition">
                       <TableCell className="pl-4 font-mono font-semibold text-foreground">
@@ -258,6 +318,11 @@ export default function CollegeDashboard() {
                       </TableCell>
                       <TableCell>
                         <StatusBadge status={app.status} />
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={`text-[10px] font-mono ${riskColor}`}>
+                          {(risk.riskScore * 100).toFixed(0)}% • {risk.routeLabel}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         {activeCount > 0 ? (

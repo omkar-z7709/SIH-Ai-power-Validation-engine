@@ -444,10 +444,35 @@ export async function POST() {
         updatedAt: isoNow,
       };
 
+      // Default statutory spatial breakdown
+      newApp.spatialBreakdown = {
+        instructionalAreaSqM: item.ref === "AICTE-2026-DEL-101" ? 3400 : 2200,
+        administrativeAreaSqM: item.ref === "AICTE-2026-DEL-101" ? 850 : 500,
+        amenitiesAreaSqM: item.ref === "AICTE-2026-DEL-101" ? 650 : 400,
+        circulationAreaSqM: item.ref === "AICTE-2026-DEL-101" ? 800 : 350,
+        minimumRequiredTBUASqM: item.ref === "AICTE-2026-DEL-101" ? 5400 : 3800,
+        locationClassification: "URBAN_RURAL",
+        alliedLaboratories: [
+          { branch: "Computer Engineering & AI", totalLabAreaSqM: 800, sharedLabAreaSqM: 200 },
+          { branch: "Electronics & Communications", totalLabAreaSqM: 600, sharedLabAreaSqM: 140 },
+        ],
+        landParcels: [
+          {
+            id: `plot_main_${item.ref}`,
+            surveyNumber: "101/A",
+            areaAcres: item.ref === "AICTE-2026-DEL-101" ? 3.2 : 1.8,
+            isMainPlot: true,
+            purpose: "CORE_ACADEMIC",
+            coordinates: { latitude: 28.6139, longitude: 77.209 },
+          },
+        ],
+      };
+
       // Deterministic rules execution
-      const { findings, computedStatus } = runDeterministicValidation(newApp);
+      const { findings, computedStatus, riskAssessment } = runDeterministicValidation(newApp);
       newApp.allFindings = findings;
       newApp.status = computedStatus;
+      newApp.riskAssessment = riskAssessment;
 
       // Provide fast local decision payload without network delays during seeding
       newApp.jevDecision = {

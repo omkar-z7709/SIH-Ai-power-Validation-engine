@@ -21,6 +21,9 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { ExportPdfButton } from "@/components/ExportPdfButton";
+import { RiskMeterGauge } from "@/components/RiskMeterGauge";
+import { SpatialComplianceCard } from "@/components/SpatialComplianceCard";
+import { calculateRiskScore } from "@/lib/rules/risk-scoring";
 import { useApplicationDetail, useInvalidateApplications, useCurrentUser } from "@/lib/hooks/use-applications";
 
 export default function ApplicationDetailPage({
@@ -239,10 +242,18 @@ export default function ApplicationDetailPage({
         </CardHeader>
 
         <CardContent className="p-5">
+          {/* Dynamic Mathematical Compliance Risk Meter Gauge */}
+          <div className="mb-5">
+            <RiskMeterGauge assessment={app.riskAssessment || calculateRiskScore(app)} />
+          </div>
+
           <Tabs defaultValue="findings" className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="findings" className="text-xs font-semibold">
                 Findings ({app.allFindings.length})
+              </TabsTrigger>
+              <TabsTrigger value="spatial" className="text-xs font-semibold">
+                Infrastructure &amp; Spatial
               </TabsTrigger>
               <TabsTrigger value="comparison" className="text-xs font-semibold">
                 Comparison Grid
@@ -331,6 +342,11 @@ export default function ApplicationDetailPage({
                   </div>
                 ))
               )}
+            </TabsContent>
+
+            {/* Tab: Infrastructure & Spatial Norms */}
+            <TabsContent value="spatial" className="space-y-4">
+              <SpatialComplianceCard spatialData={app.spatialBreakdown} />
             </TabsContent>
 
             {/* Tab 2: Comparison Grid */}

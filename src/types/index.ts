@@ -1,10 +1,23 @@
+export type CanonicalDocumentCategory =
+  | "LAND_USE_CERTIFICATE"
+  | "APPROVED_BUILDING_PLAN"
+  | "FIRE_SAFETY_NOC"
+  | "OCCUPANCY_CERTIFICATE"
+  | "STRUCTURAL_STABILITY_CERTIFICATE"
+  | "LAND_BUILDING_LEASE_DEED"
+  | "INSTITUTIONAL_AFFIDAVIT"
+  | "STATE_GOVT_UNIVERSITY_NOC"
+  | "STUDENT_FACULTY_CREDENTIALS"
+  | "SITE_TITLE_ENCUMBRANCE";
+
 export type DocumentCategory =
   | "APPLICATION_FORM"
   | "ACCREDITATION_CERTIFICATE"
   | "AFFILIATION_CERTIFICATE"
   | "UNDERTAKING"
   | "LAND_BUILDING_DOCUMENT"
-  | "OTHER_SUPPORTING";
+  | "OTHER_SUPPORTING"
+  | CanonicalDocumentCategory;
 
 export type DecisionStatus =
   | "PASSED_INITIAL_CHECKS"
@@ -135,6 +148,48 @@ export interface ApplicationRecord {
     advisoryNotes: string;
     timestamp: string;
     isRuleBasedFallback: boolean;
+  };
+  spatialBreakdown?: {
+    instructionalAreaSqM: number;
+    administrativeAreaSqM: number;
+    amenitiesAreaSqM: number;
+    circulationAreaSqM: number;
+    minimumRequiredTBUASqM?: number;
+    alliedLaboratories?: Array<{
+      branch: string;
+      totalLabAreaSqM: number;
+      sharedLabAreaSqM: number;
+    }>;
+    locationClassification?: "MEGA_METRO" | "URBAN_RURAL" | "HILLY";
+    landParcels?: Array<{
+      id: string;
+      surveyNumber: string;
+      areaAcres: number;
+      isMainPlot: boolean;
+      purpose: "CORE_ACADEMIC" | "AUXILIARY_SPORTS_HOSTEL" | "RESIDENTIAL";
+      coordinates?: { latitude: number; longitude: number };
+    }>;
+  };
+  riskAssessment?: {
+    riskScore: number;
+    riskTier: "LOW_RISK" | "MEDIUM_RISK" | "HIGH_RISK";
+    riskTierLabel: string;
+    regulatoryRoute:
+      | "FAST_TRACK_CLEARANCE"
+      | "FIFTEEN_DAY_RECTIFICATION"
+      | "EXPERT_VISIT_COMMITTEE_PRIORITY";
+    routeLabel: string;
+    recommendedAction: string;
+    factors: Array<{
+      id: string;
+      name: string;
+      weight: number;
+      violated: boolean;
+      ruleIdMatched?: string;
+      findingTitle?: string;
+    }>;
+    activePenaltyCount: number;
+    calculatedAt: string;
   };
   createdAt: string;
   updatedAt: string;

@@ -73,9 +73,10 @@ export async function POST(request: NextRequest) {
     };
 
     // Run initial deterministic check (e.g. missing documents)
-    const { findings, computedStatus } = runDeterministicValidation(newApp);
+    const { findings, computedStatus, riskAssessment } = runDeterministicValidation(newApp);
     newApp.allFindings = findings;
     newApp.status = computedStatus;
+    newApp.riskAssessment = riskAssessment;
 
     // Decision support from Jev (or rule-based fallback)
     const jevResult = await jevAdapter.getDecisionSupport({
