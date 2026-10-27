@@ -2,6 +2,7 @@
 
 import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ShieldCheck,
   Lock,
@@ -26,6 +27,7 @@ type RoleTier = "COLLEGE_ADMIN" | "COLLEGE_STAFF" | "REVIEW_OFFICER" | "SENIOR_O
 function AuthForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const from = searchParams.get("from") || "/";
 
   const [mode, setMode] = useState<AuthMode>("signin");
@@ -61,12 +63,14 @@ function AuthForm() {
       }
 
       const userRole = data.data?.user?.role;
+      const isCollege = userRole === "COLLEGE_ADMIN" || userRole === "COLLEGE_STAFF";
+
+      queryClient.clear();
+
       if (from && from !== "/login") {
         router.push(from);
-      } else if (userRole === "COLLEGE_ADMIN" || userRole === "COLLEGE_STAFF") {
+      } else if (isCollege) {
         router.push("/college/dashboard");
-      } else if (userRole === "REVIEW_OFFICER" || userRole === "SENIOR_OFFICER") {
-        router.push("/officer/dashboard");
       } else {
         router.push("/");
       }
@@ -102,10 +106,9 @@ function AuthForm() {
         throw new Error(data.error || "Registration failed");
       }
 
+      queryClient.clear();
       if (role === "COLLEGE_ADMIN" || role === "COLLEGE_STAFF") {
         router.push("/college/dashboard");
-      } else if (role === "REVIEW_OFFICER" || role === "SENIOR_OFFICER") {
-        router.push("/officer/dashboard");
       } else {
         router.push("/");
       }

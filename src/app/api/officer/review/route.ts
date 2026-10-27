@@ -1,1 +1,45 @@
-import { NextResponse } from 'next/server';import { requireRole } from '@/lib/auth/middleware';import { logAuditEvent } from '@/lib/audit/logger';import { getClientIp } from '@/lib/auth/rate-limit';import { ApplicationRepository } from '@/lib/db/repository';export const POST = requireRole(['REVIEW_OFFICER','SENIOR_OFFICER'])(async (req:any,ctx:any)=>{try{const ip=getClientIp(req);const body=await req.json();const {applicationId,action,notes}=body;const app:any=await ApplicationRepository.getById(applicationId);if(!app)return NextResponse.json({success:false,error:'Not found'},{status:404});const now=new Date().toISOString();app.reviews=app.reviews||[];app.reviews.push({id:'rev_'+Date.now(),applicationId:app.id,reviewerId:ctx.userId,reviewerName:ctx.name,action:action||'ACKNOWLEDGE_FLAG',outcomeStatus:action==='APPROVE'?'APPROVED_BY_REVIEWER':action==='REJECT'?'REJECTED_BY_REVIEWER':action==='REQUEST_CLARIFICATION'?'RETURNED_FOR_CLARIFICATION':app.status,notes:notes||'',timestamp:now});if(action==='APPROVE')app.status='APPROVED_BY_REVIEWER';if(action==='REJECT')app.status='REJECTED_BY_REVIEWER';if(action==='REQUEST_CLARIFICATION')app.status='RETURNED_FOR_CLARIFICATION';app.updatedAt=now;app.auditTrail=app.auditTrail||[];app.auditTrail.push({id:'audit_'+Date.now(),applicationId:app.id,actor:ctx.name,action:'OFFICER_'+action,details:{notes},timestamp:now});await ApplicationRepository.save(app);await logAuditEvent({actorId:ctx.userId,actor:ctx.email,actorRole:ctx.role,action:'REVIEW_'+action,applicationId:app.id,ipAddress:ip});return NextResponse.json({success:true,data:app});}catch(err:any){return NextResponse.json({success:false,error:err.message},{status:400});}});
+import { NextRequest, NextResponse } from "next/server";
+import { requireAuth, canFinalizeDecision } from "@/lib/auth/rbac";
+import { ReviewService } from "@/lib/review/review-service";
+import { ApplicationRepository } from "@/lib/db/repository";
+
+export async function POST(req: NextRequest) {
+  try {
+    const auth = await requireAuth(req, ["REVIEW_OFFICER", "SENIOR_OFFICER", "SYSTEM_ADMIN"]);
+    if (auth.error) {
+      return auth.error;
+    }
+
+    const body = await req.json();
+    const { applicationId, action, notes, targetFindingId } = body;
+
+    // Check final decision permission: only SENIOR_OFFICER / SYSTEM_ADMIN can finalize APPROVE / REJECT
+    if ((action === "APPROVE" || action === "REJECT") && !canFinalizeDecision(auth.scope.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden: Final Approve / Reject requires Senior Officer authority",
+        },
+        { status: 403 }
+      );
+    }
+
+    const app: any = await ApplicationRepository.getById(applicationId, auth.scope);
+    if (!app) {
+      return NextResponse.json({ success: false, error: "Application not found" }, { status: 404 });
+    }
+
+    const updatedApp = await ReviewService.applyReviewAction({
+      applicationId: app.id,
+      reviewerId: auth.scope.userId,
+      reviewerName: auth.scope.name,
+      action: action || "ACKNOWLEDGE_FLAG",
+      notes: notes || "",
+      targetFindingId,
+    });
+
+    return NextResponse.json({ success: true, data: updatedApp });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 400 });
+  }
+}

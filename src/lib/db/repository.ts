@@ -1,6 +1,8 @@
-import { ApplicationRecord } from "@/types";
+import { ApplicationRecord } from "../../types";
 import { connectDB, getStorageMode } from "./connection";
-import { ApplicationModel } from "@/models/Application";
+import { ApplicationModel } from "../../models/Application";
+import { AccessScope } from "../../types/auth";
+import { isCollegeUser } from "../auth/rbac";
 
 // In-memory fallback repository when MongoDB server is not running locally
 const memoryStore = new Map<string, ApplicationRecord>();
@@ -9,12 +11,22 @@ export class ApplicationRepository {
   static getStorageMode(): "mongodb" | "memory" {
     return getStorageMode();
   }
-  static async getAll(): Promise<ApplicationRecord[]> {
+
+  static async getAll(scope?: AccessScope): Promise<ApplicationRecord[]> {
+    if (scope && isCollegeUser(scope.role) && !scope.institutionId) {
+      return [];
+    }
+
     const db = await connectDB();
     if (db) {
       try {
+        const query: any = {};
+        if (scope && isCollegeUser(scope.role) && scope.institutionId) {
+          query.institutionId = scope.institutionId;
+        }
+
         // Lean projection: omit heavy extractedText from high-volume list queries
-        const records = await ApplicationModel.find()
+        const records = await ApplicationModel.find(query)
           .select({
             "documents.extractedText": 0,
             "documents.storageKey": 0,
@@ -30,19 +42,50 @@ export class ApplicationRepository {
         console.warn("MongoDB query failed, falling back to in-memory store:", err);
       }
     }
-    return Array.from(memoryStore.values()).sort(
+
+    let records = Array.from(memoryStore.values());
+    if (scope && isCollegeUser(scope.role) && scope.institutionId) {
+      records = records.filter((app) => app.institutionId === scope.institutionId);
+    }
+
+    return records.sort(
       (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     );
   }
 
-  static async getById(id: string): Promise<ApplicationRecord | null> {
+  // Alias for specification compatibility
+  static async listApplications(scope?: AccessScope): Promise<ApplicationRecord[]> {
+    return this.getAll(scope);
+  }
+
+  static async getById(id: string, scope?: AccessScope): Promise<ApplicationRecord | null> {
+    if (scope && isCollegeUser(scope.role) && !scope.institutionId) {
+      return null;
+    }
+
     const db = await connectDB();
     if (db) {
       try {
-        const record = await ApplicationModel.findOne({
+        const query: any = {
           $or: [{ _id: id.match(/^[0-9a-fA-F]{24}$/) ? id : null }, { referenceId: id }, { id }],
-        }).lean();
+        };
+
+        if (scope && isCollegeUser(scope.role) && scope.institutionId) {
+          query.institutionId = scope.institutionId;
+        }
+
+        const record = await ApplicationModel.findOne(query).lean();
         if (record) {
+          // Additional safety check against cross-tenant leakage
+          if (
+            scope &&
+            isCollegeUser(scope.role) &&
+            record.institutionId &&
+            record.institutionId !== scope.institutionId
+          ) {
+            return null;
+          }
+
           return {
             ...record,
             id: record._id ? (record._id as any).toString() : (record as any).id,
@@ -52,18 +95,54 @@ export class ApplicationRepository {
         console.warn("MongoDB find failed, falling back to in-memory store:", err);
       }
     }
-    return memoryStore.get(id) || Array.from(memoryStore.values()).find((a) => a.referenceId === id) || null;
+
+    const app =
+      memoryStore.get(id) ||
+      Array.from(memoryStore.values()).find((a) => a.referenceId === id) ||
+      null;
+
+    if (!app) {
+      return null;
+    }
+
+    if (scope && isCollegeUser(scope.role)) {
+      if (!scope.institutionId || app.institutionId !== scope.institutionId) {
+        return null;
+      }
+    }
+
+    return app;
   }
 
-  static async save(app: ApplicationRecord): Promise<ApplicationRecord> {
+  // Alias for specification compatibility
+  static async getApplicationById(id: string, scope?: AccessScope): Promise<ApplicationRecord | null> {
+    return this.getById(id, scope);
+  }
+
+  static async save(app: ApplicationRecord, scope?: AccessScope): Promise<ApplicationRecord> {
+    if (scope && isCollegeUser(scope.role)) {
+      if (!scope.institutionId) {
+        throw new Error("No institution bound to user scope");
+      }
+      if (app.institutionId && app.institutionId !== scope.institutionId) {
+        throw new Error("Tenant isolation violation: cannot save record for another institution");
+      }
+      app.institutionId = scope.institutionId;
+    }
+
     app.updatedAt = new Date().toISOString();
     memoryStore.set(app.id, app);
 
     const db = await connectDB();
     if (db) {
       try {
+        const filter: any = { referenceId: app.referenceId };
+        if (scope && isCollegeUser(scope.role) && scope.institutionId) {
+          filter.institutionId = scope.institutionId;
+        }
+
         await ApplicationModel.findOneAndUpdate(
-          { referenceId: app.referenceId },
+          filter,
           { ...app },
           { upsert: true, new: true }
         );
@@ -86,15 +165,30 @@ export class ApplicationRepository {
     }
   }
 
-  static async count(): Promise<number> {
+  static async count(scope?: AccessScope): Promise<number> {
+    if (scope && isCollegeUser(scope.role) && !scope.institutionId) {
+      return 0;
+    }
+
     const db = await connectDB();
     if (db) {
       try {
-        return await ApplicationModel.countDocuments();
+        const query: any = {};
+        if (scope && isCollegeUser(scope.role) && scope.institutionId) {
+          query.institutionId = scope.institutionId;
+        }
+        return await ApplicationModel.countDocuments(query);
       } catch {
         // fallback
       }
     }
+
+    if (scope && isCollegeUser(scope.role) && scope.institutionId) {
+      return Array.from(memoryStore.values()).filter(
+        (app) => app.institutionId === scope.institutionId
+      ).length;
+    }
+
     return memoryStore.size;
   }
 }

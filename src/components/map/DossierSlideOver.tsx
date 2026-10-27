@@ -143,8 +143,8 @@ export function DossierSlideOver({ node, anomalies, onClose }: DossierSlideOverP
               <p className="text-[11px] text-muted-foreground">All statutory credentials verified clean.</p>
             </div>
           ) : (
-            activeFindings.map((finding) => (
-              <div key={finding.id} className="p-3 rounded-lg border border-border bg-card shadow-2xs space-y-1.5">
+            activeFindings.map((finding, idx) => (
+              <div key={`${finding.id || finding.ruleId}_${idx}`} className="p-3 rounded-lg border border-border bg-card shadow-2xs space-y-1.5">
                 <div className="flex items-center gap-2">
                   <SeverityBadge severity={finding.severity} />
                   <span className="font-bold text-foreground leading-tight">{finding.title}</span>

@@ -245,9 +245,9 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="mt-2.5 space-y-1.5">
-                      {app.allFindings.slice(0, 2).map((finding) => (
+                      {app.allFindings.slice(0, 2).map((finding, idx) => (
                         <div
-                          key={finding.id}
+                          key={`${app.id}_${finding.id || finding.ruleId}_${idx}`}
                           className="flex items-start space-x-2 text-xs bg-muted/40 p-2 rounded-md border border-border"
                         >
                           <SeverityBadge severity={finding.severity} />

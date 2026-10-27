@@ -20,7 +20,8 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { useApplicationDetail, useInvalidateApplications } from "@/lib/hooks/use-applications";
+import { ExportPdfButton } from "@/components/ExportPdfButton";
+import { useApplicationDetail, useInvalidateApplications, useCurrentUser } from "@/lib/hooks/use-applications";
 
 export default function ApplicationDetailPage({
   params,
@@ -28,15 +29,19 @@ export default function ApplicationDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
+  const { data: user } = useCurrentUser();
   const { data: app, isLoading: loading } = useApplicationDetail(resolvedParams.id);
   const { setDetailData } = useInvalidateApplications();
+
+  const isCollege = user?.role === "COLLEGE_ADMIN" || user?.role === "COLLEGE_STAFF";
+  const canFinalize = user?.role === "SENIOR_OFFICER" || user?.role === "SYSTEM_ADMIN";
 
   // Review Action Form State
   const [actionNotes, setActionNotes] = useState("");
   const [selectedAction, setSelectedAction] = useState<
     "APPROVE" | "REJECT" | "REQUEST_CLARIFICATION" | "ESCALATE"
-  >("APPROVE");
-  const [reviewerName, setReviewerName] = useState("Dr. R. K. Verma (Scrutiny Officer)");
+  >("REQUEST_CLARIFICATION");
+  const [reviewerName, setReviewerName] = useState(user?.name || "Dr. R. K. Verma (Scrutiny Officer)");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
 
@@ -184,14 +189,7 @@ export default function ApplicationDetailPage({
         </Link>
 
         <div className="flex items-center space-x-2">
-          <a
-            href={`/api/applications/${app.id}/report?format=pdf`}
-            download
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-md border border-primary/30 bg-primary/10 hover:bg-primary/20 text-primary transition shadow-2xs"
-          >
-            <FileText className="h-3.5 w-3.5" />
-            <span>Export PDF</span>
-          </a>
+          <ExportPdfButton applicationId={app.id} referenceId={app.referenceId} />
           <a
             href={`/api/applications/${app.id}/report?format=csv`}
             download
@@ -252,9 +250,11 @@ export default function ApplicationDetailPage({
               <TabsTrigger value="documents" className="text-xs font-semibold">
                 Credentials ({app.documents.length})
               </TabsTrigger>
-              <TabsTrigger value="review" className="text-xs font-semibold">
-                Determination
-              </TabsTrigger>
+              {!isCollege && (
+                <TabsTrigger value="review" className="text-xs font-semibold">
+                  Determination
+                </TabsTrigger>
+              )}
               <TabsTrigger value="audit" className="text-xs font-semibold">
                 Audit Trail ({app.auditTrail.length})
               </TabsTrigger>
@@ -271,9 +271,9 @@ export default function ApplicationDetailPage({
                   </p>
                 </div>
               ) : (
-                app.allFindings.map((finding) => (
+                app.allFindings.map((finding, idx) => (
                   <div
-                    key={finding.id}
+                    key={`${finding.id || finding.ruleId}_${idx}`}
                     className={`p-4 rounded-lg border transition ${
                       finding.dismissed
                         ? "bg-muted/30 border-border opacity-65"
@@ -301,7 +301,7 @@ export default function ApplicationDetailPage({
                         </p>
                       </div>
 
-                      {!finding.dismissed && (
+                      {!finding.dismissed && !isCollege && (
                         <Button
                           type="button"
                           variant="outline"
@@ -498,128 +498,116 @@ export default function ApplicationDetailPage({
             </TabsContent>
 
             {/* Tab 4: Reviewer Action */}
-            <TabsContent value="review" className="max-w-xl space-y-4">
-              <div className="bg-muted/30 p-3.5 rounded-lg border border-border text-xs text-muted-foreground prose-readable">
-                <p className="font-semibold text-foreground">Scrutiny Adjudication Guidelines</p>
-                <p className="mt-1 text-[11px] leading-relaxed">
-                  Decisions recorded here become an immutable part of the statutory audit trail. Adverse determinations or requests for clarification must cite specific document discrepancies and AICTE Approval Process Handbook (APH) clauses.
-                </p>
-              </div>
-
-              <form onSubmit={handleReviewAction} className="space-y-4">
-                <div>
-                  <label htmlFor="officer-name" className="block text-xs font-semibold text-foreground mb-1.5">
-                    Scrutiny Officer Name & Designation *
-                  </label>
-                  <Input
-                    id="officer-name"
-                    required
-                    value={reviewerName}
-                    onChange={(e) => setReviewerName(e.target.value)}
-                    className="text-xs h-9"
-                    placeholder="e.g. Dr. R. K. Verma (Senior Review Officer)"
-                  />
+            {!isCollege && (
+              <TabsContent value="review" className="max-w-xl space-y-4">
+                <div className="bg-muted/30 p-3.5 rounded-lg border border-border text-xs text-muted-foreground prose-readable">
+                  <p className="font-semibold text-foreground">Scrutiny Adjudication Guidelines</p>
+                  <p className="mt-1 text-[11px] leading-relaxed">
+                    Decisions recorded here become an immutable part of the statutory audit trail. Adverse determinations or requests for clarification must cite specific document discrepancies and AICTE Approval Process Handbook (APH) clauses.
+                  </p>
                 </div>
 
-                <fieldset className="space-y-1.5" role="radiogroup" aria-labelledby="adjudication-legend">
-                  <legend id="adjudication-legend" className="block text-xs font-semibold text-foreground">
-                    Adjudication Determination *
-                  </legend>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
-                    <Button
-                      type="button"
-                      role="radio"
-                      aria-checked={selectedAction === "APPROVE"}
-                      variant={selectedAction === "APPROVE" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedAction("APPROVE")}
-                      className="text-xs h-9 font-semibold"
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      type="button"
-                      role="radio"
-                      aria-checked={selectedAction === "REQUEST_CLARIFICATION"}
-                      variant={selectedAction === "REQUEST_CLARIFICATION" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedAction("REQUEST_CLARIFICATION")}
-                      className="text-xs h-9 font-semibold"
-                    >
-                      Clarify
-                    </Button>
-                    <Button
-                      type="button"
-                      role="radio"
-                      aria-checked={selectedAction === "ESCALATE"}
-                      variant={selectedAction === "ESCALATE" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedAction("ESCALATE")}
-                      className="text-xs h-9 font-semibold"
-                    >
-                      Escalate
-                    </Button>
-                    <Button
-                      type="button"
-                      role="radio"
-                      aria-checked={selectedAction === "REJECT"}
-                      variant={selectedAction === "REJECT" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSelectedAction("REJECT")}
-                      className="text-xs h-9 font-semibold"
-                    >
-                      Reject
-                    </Button>
+                <form onSubmit={handleReviewAction} className="space-y-4">
+                  <div>
+                    <label htmlFor="officer-name" className="block text-xs font-semibold text-foreground mb-1.5">
+                      Scrutiny Officer Name & Designation *
+                    </label>
+                    <Input
+                      id="officer-name"
+                      required
+                      value={reviewerName}
+                      onChange={(e) => setReviewerName(e.target.value)}
+                      className="text-xs h-9"
+                      placeholder="e.g. Dr. R. K. Verma (Senior Review Officer)"
+                    />
                   </div>
-                </fieldset>
 
-                <div>
-                  <label htmlFor="action-notes" className="block text-xs font-semibold text-foreground mb-1.5">
-                    Official Justification & Decision Notes *
-                  </label>
-                  <textarea
-                    id="action-notes"
-                    rows={3}
-                    required
-                    placeholder="Enter factual grounds for this determination and reference relevant certificate pages..."
-                    value={actionNotes}
-                    onChange={(e) => setActionNotes(e.target.value)}
-                    className="w-full text-xs p-3 rounded-md border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring leading-relaxed"
-                  ></textarea>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isSubmittingReview}
-                  className="font-semibold text-xs h-9 px-4 shadow-2xs"
-                >
-                  {isSubmittingReview ? "Saving Decision..." : "Submit Official Adjudication"}
-                </Button>
-              </form>
-
-              {app.reviews.length > 0 && (
-                <div className="pt-4 border-t border-border space-y-2">
-                  <h3 className="text-xs font-bold text-foreground uppercase tracking-wide">
-                    Decision History ({app.reviews.length})
-                  </h3>
-                  {app.reviews.map((rev) => (
-                    <div
-                      key={rev.id}
-                      className="p-2.5 bg-card border border-border rounded-md text-xs space-y-1 font-mono text-[11px]"
-                    >
-                      <div className="flex items-center justify-between font-bold text-foreground">
-                        <span>{rev.reviewerName}</span>
-                        <span className="text-muted-foreground">{rev.timestamp}</span>
-                      </div>
-                      <div className="text-primary font-semibold">
-                        Action: {rev.action} &rarr; Status: {rev.outcomeStatus}
-                      </div>
-                      <p className="text-muted-foreground font-sans">{rev.notes}</p>
+                  <fieldset className="space-y-1.5" role="radiogroup" aria-labelledby="adjudication-legend">
+                    <legend id="adjudication-legend" className="block text-xs font-semibold text-foreground">
+                      Adjudication Determination *
+                    </legend>
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-0.5">
+                      <Button
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedAction === "APPROVE"}
+                        variant={selectedAction === "APPROVE" ? "default" : "outline"}
+                        size="sm"
+                        disabled={!canFinalize}
+                        onClick={() => setSelectedAction("APPROVE")}
+                        className={`text-xs h-9 font-semibold ${!canFinalize ? "opacity-50 cursor-not-allowed" : ""}`}
+                        title={!canFinalize ? "Requires Senior Officer authority" : ""}
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedAction === "REQUEST_CLARIFICATION"}
+                        variant={selectedAction === "REQUEST_CLARIFICATION" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedAction("REQUEST_CLARIFICATION")}
+                        className="text-xs h-9 font-semibold"
+                      >
+                        Clarify
+                      </Button>
+                      <Button
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedAction === "ESCALATE"}
+                        variant={selectedAction === "ESCALATE" ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setSelectedAction("ESCALATE")}
+                        className="text-xs h-9 font-semibold"
+                      >
+                        Escalate
+                      </Button>
+                      <Button
+                        type="button"
+                        role="radio"
+                        aria-checked={selectedAction === "REJECT"}
+                        variant={selectedAction === "REJECT" ? "default" : "outline"}
+                        size="sm"
+                        disabled={!canFinalize}
+                        onClick={() => setSelectedAction("REJECT")}
+                        className={`text-xs h-9 font-semibold ${!canFinalize ? "opacity-50 cursor-not-allowed" : ""}`}
+                        title={!canFinalize ? "Requires Senior Officer authority" : ""}
+                      >
+                        Reject
+                      </Button>
                     </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+                    {!canFinalize && (
+                      <p className="text-[11px] text-amber-600 dark:text-amber-400 font-medium mt-1">
+                        * Final Approve and Reject decisions require Senior Officer authority (OFFICER_2 / SENIOR_OFFICER).
+                      </p>
+                    )}
+                  </fieldset>
+
+                  <div>
+                    <label htmlFor="action-notes" className="block text-xs font-semibold text-foreground mb-1.5">
+                      Official Justification & Decision Notes *
+                    </label>
+                    <textarea
+                      id="action-notes"
+                      rows={3}
+                      required
+                      placeholder="Enter factual grounds for this determination and reference relevant certificate pages..."
+                      value={actionNotes}
+                      onChange={(e) => setActionNotes(e.target.value)}
+                      className="w-full text-xs p-3 rounded-md border border-input bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring leading-relaxed"
+                    ></textarea>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={isSubmittingReview}
+                    className="font-semibold text-xs h-9 px-4 shadow-2xs"
+                  >
+                    {isSubmittingReview ? "Saving Decision..." : "Submit Official Adjudication"}
+                  </Button>
+                </form>
+              </TabsContent>
+            )}
 
             {/* Tab 5: Audit Trail */}
             <TabsContent value="audit" className="space-y-2">

@@ -68,6 +68,8 @@ export interface AuthSessionPayload {
   };
 }
 
+export type AccessScope = AuthSessionPayload;
+
 export interface GeographicAdministrativeUnit {
   state: string;
   districts: {

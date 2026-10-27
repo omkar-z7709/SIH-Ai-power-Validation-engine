@@ -25,6 +25,9 @@ export function requireAuth(handler: (req: NextRequest, ctx: AuthorizedContext) 
     if (!ctx) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
+    if ((ctx.role === "COLLEGE_ADMIN" || ctx.role === "COLLEGE_STAFF") && !ctx.institutionId) {
+      return NextResponse.json({ success: false, error: "Forbidden: No institution bound" }, { status: 403 });
+    }
     return handler(req, ctx);
   };
 }

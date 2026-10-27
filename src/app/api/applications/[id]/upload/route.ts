@@ -1,17 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ApplicationRepository } from "@/lib/db/repository";
 import { processUploadedFile } from "@/lib/documents/document-processor";
 import { runDeterministicValidation } from "@/lib/rules/rules-engine";
 import { jevAdapter } from "@/lib/jev/jev-adapter";
 import { DocumentCategory } from "@/types";
+import { requireAuth } from "@/lib/auth/rbac";
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) {
+      return auth.error;
+    }
+
     const { id } = await params;
-    const app = await ApplicationRepository.getById(id);
+    const app = await ApplicationRepository.getById(id, auth.scope);
     if (!app) {
       return NextResponse.json(
         { success: false, error: "Application not found" },
@@ -74,7 +80,7 @@ export async function POST(
         id: `audit_upload_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
         applicationId: app.id,
         documentId: docRecord.id,
-        actor: "System Upload Handler",
+        actor: `${auth.scope.name} (${auth.scope.role})`,
         action: "DOCUMENT_UPLOADED",
         details: {
           filename: docRecord.originalFilename,
@@ -101,17 +107,23 @@ export async function POST(
     });
     app.jevDecision = jevResult;
 
-    await ApplicationRepository.save(app);
+    await ApplicationRepository.save(app, auth.scope);
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        application: app,
-        uploadedDocuments: processedDocs,
+    return NextResponse.json(
+      {
+        success: true,
+        data: {
+          application: app,
+          uploadedCount: processedDocs.length,
+          documents: processedDocs,
+          applicationStatus: app.status,
+          findingsCount: app.allFindings.length,
+          jevDecision: app.jevDecision,
+        },
       },
-    });
+      { status: 200 }
+    );
   } catch (err: any) {
-    console.error("Upload error:", err);
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }

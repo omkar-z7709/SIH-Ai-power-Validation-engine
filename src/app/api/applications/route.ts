@@ -1,28 +1,55 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ApplicationRepository } from "@/lib/db/repository";
 import { CreateApplicationSchema } from "@/lib/validation/schemas";
 import { ApplicationRecord } from "@/types";
 import { runDeterministicValidation } from "@/lib/rules/rules-engine";
 import { jevAdapter } from "@/lib/jev/jev-adapter";
+import { requireAuth, canSubmitApplication, isCollegeUser } from "@/lib/auth/rbac";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const apps = await ApplicationRepository.getAll();
+    const auth = await requireAuth(request);
+    if (auth.error) {
+      return auth.error;
+    }
+
+    const apps = await ApplicationRepository.getAll(auth.scope);
     return NextResponse.json({ success: true, data: apps });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) {
+      return auth.error;
+    }
+
+    // Role check: Only COLLEGE_ADMIN or SYSTEM_ADMIN can create/submit an application
+    if (!canSubmitApplication(auth.scope.role)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Forbidden: College staff cannot execute final application submission",
+        },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const validated = CreateApplicationSchema.parse(body);
 
     const now = new Date().toISOString();
+    const assignedInstitutionId = isCollegeUser(auth.scope.role)
+      ? auth.scope.institutionId
+      : body.institutionId || undefined;
+
     const newApp: ApplicationRecord = {
       id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       referenceId: validated.referenceId,
+      institutionId: assignedInstitutionId,
       institutionName: validated.institutionName,
       applicationType: validated.applicationType,
       academicYear: validated.academicYear,
@@ -35,7 +62,7 @@ export async function POST(request: Request) {
         {
           id: `audit_${Date.now()}`,
           applicationId: validated.referenceId,
-          actor: "System / Applicant Portal",
+          actor: `${auth.scope.name} (${auth.scope.role})`,
           action: "APPLICATION_CREATED",
           details: { ...validated },
           timestamp: now,
@@ -60,7 +87,7 @@ export async function POST(request: Request) {
     });
     newApp.jevDecision = jevResult;
 
-    await ApplicationRepository.save(newApp);
+    await ApplicationRepository.save(newApp, auth.scope);
     return NextResponse.json({ success: true, data: newApp }, { status: 201 });
   } catch (err: any) {
     return NextResponse.json(

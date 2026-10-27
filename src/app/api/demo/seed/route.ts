@@ -122,6 +122,7 @@ export async function POST() {
 
     const demoCases: Array<{
       ref: string;
+      institutionId: string;
       name: string;
       type: "NEW_INSTITUTE" | "EXTENSION_OF_APPROVAL" | "INCREASE_IN_INTAKE";
       year: string;
@@ -137,6 +138,7 @@ export async function POST() {
       // 1. Fully Valid application with all required docs
       {
         ref: "AICTE-2026-DEL-101",
+        institutionId: "inst_apex_tech_01",
         name: "Apex Institute of Advanced Technology",
         type: "EXTENSION_OF_APPROVAL",
         year: "2026-27",
@@ -190,6 +192,7 @@ export async function POST() {
       // 2. Missing Required Document (Missing Affiliation)
       {
         ref: "AICTE-2026-MH-204",
+        institutionId: "inst_sahyadri_204",
         name: "Sahyadri College of Engineering & Research",
         type: "NEW_INSTITUTE",
         year: "2026-27",
@@ -217,6 +220,7 @@ export async function POST() {
       // 3. Institution Name Mismatch
       {
         ref: "AICTE-2026-KA-309",
+        institutionId: "inst_cauvery_309",
         name: "Cauvery Institute of Engineering and Management",
         type: "INCREASE_IN_INTAKE",
         year: "2026-27",
@@ -265,6 +269,7 @@ export async function POST() {
       // 4. Expired Certificate & Date Conflict (Issue date > Expiry)
       {
         ref: "AICTE-2026-TN-415",
+        institutionId: "inst_coromandel_415",
         name: "Coromandel Academy of Technology",
         type: "EXTENSION_OF_APPROVAL",
         year: "2026-27",
@@ -316,6 +321,7 @@ export async function POST() {
       // 5. Verification Required Case
       {
         ref: "AICTE-2026-UP-522",
+        institutionId: "inst_ganga_522",
         name: "Ganga Institute of Technical Studies",
         type: "EXTENSION_OF_APPROVAL",
         year: "2026-27",
@@ -366,6 +372,7 @@ export async function POST() {
       // 6. Unreadable / Corrupted Document
       {
         ref: "AICTE-2026-GJ-611",
+        institutionId: "inst_sabarmati_611",
         name: "Sabarmati Polytechnic & Engineering Center",
         type: "NEW_INSTITUTE",
         year: "2026-27",
@@ -414,7 +421,7 @@ export async function POST() {
       const newApp: ApplicationRecord = {
         id: `app_${item.ref.toLowerCase().replace(/[^a-z0-9]/g, "_")}`,
         referenceId: item.ref,
-        institutionId: demoInstitutionId,
+        institutionId: item.institutionId || demoInstitutionId,
         institutionName: item.name,
         applicationType: item.type,
         academicYear: item.year,
@@ -465,4 +472,8 @@ export async function POST() {
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message }, { status: 500 });
   }
+}
+
+export async function GET() {
+  return POST();
 }

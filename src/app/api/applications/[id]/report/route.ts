@@ -1,17 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { ApplicationRepository } from "@/lib/db/repository";
 import { generateApplicationCsv, generateApplicationJson } from "@/lib/review/report-generator";
+import { requireAuth } from "@/lib/auth/rbac";
 
 export async function GET(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireAuth(request);
+    if (auth.error) {
+      return auth.error;
+    }
+
     const { id } = await params;
     const url = new URL(request.url);
     const format = url.searchParams.get("format") || "json";
 
-    const app = await ApplicationRepository.getById(id);
+    const app = await ApplicationRepository.getById(id, auth.scope);
     if (!app) {
       return NextResponse.json(
         { success: false, error: "Application not found" },

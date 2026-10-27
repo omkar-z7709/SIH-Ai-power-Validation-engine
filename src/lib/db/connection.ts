@@ -25,6 +25,9 @@ if (!global.mongooseCache) {
   global.mongooseCache = cached;
 }
 
+let lastFailedTime = 0;
+const FAILED_COOLDOWN_MS = 30000;
+
 export function getStorageMode(): "mongodb" | "memory" {
   return cached.conn ? "mongodb" : "memory";
 }
@@ -34,10 +37,17 @@ export async function connectDB(): Promise<typeof mongoose | null> {
     return cached.conn;
   }
 
+  // If a recent connection attempt failed, do not block repeatedly on every query
+  const now = Date.now();
+  if (lastFailedTime && now - lastFailedTime < FAILED_COOLDOWN_MS) {
+    return null;
+  }
+
   if (!cached.promise) {
+    const isTest = Boolean(process.env.VITEST || process.env.NODE_ENV === "test");
     const opts: mongoose.ConnectOptions = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 8000,
+      serverSelectionTimeoutMS: isTest ? 1000 : 8000,
     };
 
     cached.promise = mongoose.connect(MONGODB_URI, opts).then((m) => m);
@@ -50,6 +60,7 @@ export async function connectDB(): Promise<typeof mongoose | null> {
   } catch (err: any) {
     console.error("MongoDB connection failed:", err.message);
     cached.promise = null;
+    lastFailedTime = Date.now();
     return null;
   }
 }
