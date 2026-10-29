@@ -9,12 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useApplications } from "@/lib/hooks/use-applications";
+import { useApplications, useCurrentUser } from "@/lib/hooks/use-applications";
 
 export default function ApplicationsPage() {
+  const { data: user } = useCurrentUser();
   const { data: apps = [], isLoading: loading } = useApplications();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
+
+  const userRegion = user?.assignedJurisdiction?.region;
 
   const filteredApps = apps.filter((app) => {
     const matchesSearch =
@@ -32,11 +35,20 @@ export default function ApplicationsPage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Applications Directory
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Applications Directory
+            </h1>
+            {userRegion && userRegion !== "ALL" && (
+              <Badge variant="outline" className="font-mono text-[10px] text-primary border-primary/30 bg-primary/5">
+                RO - {userRegion} Jurisdiction
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Search, filter, and inspect institutional submissions and attached credentials.
+            {userRegion && userRegion !== "ALL"
+              ? `Regional institutional submissions and verified credentials under ${userRegion} scrutiny jurisdiction.`
+              : "Search, filter, and inspect institutional submissions and attached credentials."}
           </p>
         </div>
         <Link

@@ -14,7 +14,7 @@ import {
   CheckCircle2,
   RefreshCw,
 } from "lucide-react";
-import { useApplications } from "@/lib/hooks/use-applications";
+import { useApplications, useCurrentUser } from "@/lib/hooks/use-applications";
 import {
   enrichApplicationsForGeo,
   type EnrichedGeoApplication,
@@ -53,15 +53,29 @@ const REGION_PRESETS: RegionPreset[] = [
 ];
 
 export default function GeospatialRadarPage() {
+  const { data: user } = useCurrentUser();
   const { data: applications = [], isLoading, refetch } = useApplications();
+
+  const isPuneOfficer = user?.assignedJurisdiction?.region === "PUNE";
+  const userRegion = user?.assignedJurisdiction?.region;
 
   const [activeViewport, setActiveViewport] = useState<{
     center: [number, number];
     zoom: number;
   }>({
-    center: [21.84, 82.79],
-    zoom: 4.5,
+    center: [18.5913, 73.7389],
+    zoom: 13,
   });
+
+  const availablePresets = useMemo(() => {
+    if (isPuneOfficer) {
+      return [{ label: "Pune Jurisdiction", center: [18.5913, 73.7389] as [number, number], zoom: 13 }];
+    }
+    if (userRegion && userRegion !== "ALL") {
+      return REGION_PRESETS.filter(p => p.label.toUpperCase().includes(userRegion));
+    }
+    return REGION_PRESETS;
+  }, [isPuneOfficer, userRegion]);
 
   const [selectedNode, setSelectedNode] = useState<EnrichedGeoApplication | null>(null);
   const [riskFilter, setRiskFilter] = useState<"ALL" | "CRITICAL" | "NEW">("ALL");
@@ -107,7 +121,7 @@ export default function GeospatialRadarPage() {
                 Regional Scrutiny Radar
               </h1>
               <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground border border-border">
-                AICTE PS-26261
+                {isPuneOfficer ? "RO - Pune Jurisdiction" : userRegion ? `RO - ${userRegion}` : "Official Radar"}
               </span>
             </div>
             <p className="text-[11px] text-muted-foreground">
@@ -168,7 +182,7 @@ export default function GeospatialRadarPage() {
           <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mr-1.5 shrink-0">
             Hotspots:
           </span>
-          {REGION_PRESETS.map((preset) => (
+          {availablePresets.map((preset) => (
             <button
               key={preset.label}
               onClick={() =>

@@ -11,6 +11,7 @@ const UserSchema = new Schema<IUserModel>(
     role: { type: String, required: true, index: true },
     institutionId: { type: String, index: true },
     assignedJurisdiction: {
+      region: { type: String, index: true },
       state: { type: String },
       district: { type: String },
     },

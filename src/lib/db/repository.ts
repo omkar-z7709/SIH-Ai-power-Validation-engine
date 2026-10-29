@@ -23,6 +23,13 @@ export class ApplicationRepository {
         const query: any = {};
         if (scope && isCollegeUser(scope.role) && scope.institutionId) {
           query.institutionId = scope.institutionId;
+        } else if (
+          scope &&
+          scope.role === "REVIEW_OFFICER" &&
+          scope.assignedJurisdiction?.region &&
+          scope.assignedJurisdiction.region !== "ALL"
+        ) {
+          query.region = scope.assignedJurisdiction.region;
         }
 
         // Lean projection: omit heavy extractedText from high-volume list queries
@@ -46,6 +53,13 @@ export class ApplicationRepository {
     let records = Array.from(memoryStore.values());
     if (scope && isCollegeUser(scope.role) && scope.institutionId) {
       records = records.filter((app) => app.institutionId === scope.institutionId);
+    } else if (
+      scope &&
+      scope.role === "REVIEW_OFFICER" &&
+      scope.assignedJurisdiction?.region &&
+      scope.assignedJurisdiction.region !== "ALL"
+    ) {
+      records = records.filter((app) => app.region === scope.assignedJurisdiction?.region);
     }
 
     return records.sort(

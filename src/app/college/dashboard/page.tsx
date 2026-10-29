@@ -38,7 +38,7 @@ export default function CollegeDashboard() {
   const institutionName =
     apps[0]?.institutionName ||
     (user?.institutionId === "inst_apex_tech_01"
-      ? "Apex Institute of Advanced Technology"
+      ? "Bharat Institute of Advanced Engineering"
       : "Institutional Portal");
 
   const officialCode =

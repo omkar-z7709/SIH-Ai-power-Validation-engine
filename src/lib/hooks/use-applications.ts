@@ -8,7 +8,7 @@ export interface CurrentUser {
   email: string;
   role: UserRole;
   institutionId?: string;
-  assignedJurisdiction?: { state?: string; district?: string };
+  assignedJurisdiction?: { region?: string; state?: string; district?: string };
 }
 
 // Stable query keys scoped by role, user, and tenant institution

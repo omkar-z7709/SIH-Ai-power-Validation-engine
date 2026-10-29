@@ -25,13 +25,13 @@ export async function POST() {
     const isoNow = now.toISOString();
 
     // 1. Seed Demo Institution
-    const demoInstitutionId = "inst_apex_tech_01";
+    const demoInstitutionId = "inst_bharat_tech_01";
     await InstitutionModel.findOneAndUpdate(
       { officialCode: "AICTE-INST-DEL-101" },
       {
         officialCode: "AICTE-INST-DEL-101",
-        name: "Apex Institute of Advanced Technology",
-        legalEntityName: "Apex Educational Foundation Trust",
+        name: "Bharat Institute of Advanced Engineering",
+        legalEntityName: "Bharat Educational Foundation Trust",
         state: "Delhi",
         district: "New Delhi",
         taluka: "Connaught Place",
@@ -82,9 +82,69 @@ export async function POST() {
       },
       {
         email: (process.env.DEFAULT_OFFICER_EMAIL || "officer@aicte.gov.in").toLowerCase(),
-        name: "Dr. R. K. Verma (First Scrutiny Officer)",
+        name: "Dr. R. K. Verma (RO - Bangalore)",
         passwordHash: officerHash,
         role: "REVIEW_OFFICER",
+        assignedJurisdiction: {
+          region: "BANGALORE",
+          state: "Karnataka",
+        },
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
+        email: "officer.bangalore@aicte.gov.in",
+        name: "Dr. Ramesh Hegde (RO - Bangalore)",
+        passwordHash: officerHash,
+        role: "REVIEW_OFFICER",
+        assignedJurisdiction: {
+          region: "BANGALORE",
+          state: "Karnataka",
+        },
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
+        email: "officer.mumbai@aicte.gov.in",
+        name: "Dr. Sunita Deshmukh (RO - Mumbai)",
+        passwordHash: officerHash,
+        role: "REVIEW_OFFICER",
+        assignedJurisdiction: {
+          region: "MUMBAI",
+          state: "Maharashtra",
+        },
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
+        email: "officer.delhi@aicte.gov.in",
+        name: "Dr. Rajeshwar Tyagi (RO - Delhi)",
+        passwordHash: officerHash,
+        role: "REVIEW_OFFICER",
+        assignedJurisdiction: {
+          region: "DELHI",
+          state: "Delhi",
+        },
+        isActive: true,
+        isVerified: true,
+        createdAt: isoNow,
+        updatedAt: isoNow,
+      },
+      {
+        email: "officer.pune@aicte.gov.in",
+        name: "Dr. Milind Kulkarni (RO - Pune)",
+        passwordHash: officerHash,
+        role: "REVIEW_OFFICER",
+        assignedJurisdiction: {
+          region: "PUNE",
+          state: "Maharashtra",
+        },
         isActive: true,
         isVerified: true,
         createdAt: isoNow,
@@ -92,9 +152,12 @@ export async function POST() {
       },
       {
         email: "senior.officer@aicte.gov.in",
-        name: "Dr. S. K. Sen (Senior Appellate Officer)",
+        name: "Dr. S. K. Sen (Central / Senior Officer)",
         passwordHash: seniorOfficerHash,
         role: "SENIOR_OFFICER",
+        assignedJurisdiction: {
+          region: "ALL",
+        },
         isActive: true,
         isVerified: true,
         createdAt: isoNow,
@@ -127,6 +190,7 @@ export async function POST() {
       type: "NEW_INSTITUTE" | "EXTENSION_OF_APPROVAL" | "INCREASE_IN_INTAKE";
       year: string;
       state: string;
+      region: "BANGALORE" | "MUMBAI" | "DELHI" | "PUNE";
       docs: Array<{
         name: string;
         cat: any;
@@ -135,31 +199,32 @@ export async function POST() {
         status?: any;
       }>;
     }> = [
-      // 1. Fully Valid application with all required docs
+      // 1. Fully Valid application with all required docs (Delhi Region)
       {
         ref: "AICTE-2026-DEL-101",
-        institutionId: "inst_apex_tech_01",
-        name: "Apex Institute of Advanced Technology",
+        institutionId: "inst_bharat_tech_01",
+        name: "Bharat Institute of Advanced Engineering",
         type: "EXTENSION_OF_APPROVAL",
         year: "2026-27",
         state: "Delhi",
+        region: "DELHI",
         docs: [
           {
             name: "Application_Form_Signed.pdf",
             cat: "APPLICATION_FORM",
-            text: "AICTE Approval Process Handbook 2026-27. Application Form. Application ID: AICTE-2026-DEL-101. Institution Name: Apex Institute of Advanced Technology. Address: Plot 14, Institutional Area, Sector 62, New Delhi. Course Approved: B.Tech Computer Science, Annual Intake: 180.",
+            text: "AICTE Approval Process Handbook 2026-27. Application Form. Application ID: AICTE-2026-DEL-101. Institution Name: Bharat Institute of Advanced Engineering. Address: Plot 14, Institutional Area, Sector 62, New Delhi. Course Approved: B.Tech Computer Science, Annual Intake: 180.",
             fields: {
               applicationNumber: "AICTE-2026-DEL-101",
-              institutionName: "Apex Institute of Advanced Technology",
+              institutionName: "Bharat Institute of Advanced Engineering",
               institutionAddress: "Plot 14, Institutional Area, Sector 62, New Delhi",
             },
           },
           {
             name: "NAAC_Accreditation_A_Plus.pdf",
             cat: "ACCREDITATION_CERTIFICATE",
-            text: "National Assessment and Accreditation Council (NAAC). Certificate of Accreditation. This is to certify that Apex Institute of Advanced Technology has been accredited with Grade A+. Certificate No: NAAC/2024/DEL/8821. Issue Date: 15-06-2024. Expiry Date: 14-06-2029.",
+            text: "National Assessment and Accreditation Council (NAAC). Certificate of Accreditation. This is to certify that Bharat Institute of Advanced Engineering has been accredited with Grade A+. Certificate No: NAAC/2024/DEL/8821. Issue Date: 15-06-2024. Expiry Date: 14-06-2029.",
             fields: {
-              institutionName: "Apex Institute of Advanced Technology",
+              institutionName: "Bharat Institute of Advanced Engineering",
               certificateNumber: "NAAC/2024/DEL/8821",
               accreditationGrade: "A+",
               issueDate: "2024-06-15",
@@ -170,9 +235,9 @@ export async function POST() {
           {
             name: "University_Affiliation_2026.pdf",
             cat: "AFFILIATION_CERTIFICATE",
-            text: "Delhi Technological University. Office of the Registrar. Grant of Continuation of Affiliation. Ref No: DTU/AFFIL/2026/0491. Institution Name: Apex Institute of Advanced Technology. Issue Date: 10-01-2026. Valid until: 31-07-2027.",
+            text: "Delhi Technological University. Office of the Registrar. Grant of Continuation of Affiliation. Ref No: DTU/AFFIL/2026/0491. Institution Name: Bharat Institute of Advanced Engineering. Issue Date: 10-01-2026. Valid until: 31-07-2027.",
             fields: {
-              institutionName: "Apex Institute of Advanced Technology",
+              institutionName: "Bharat Institute of Advanced Engineering",
               certificateNumber: "DTU/AFFIL/2026/0491",
               issueDate: "2026-01-10",
               expiryDate: "2027-07-31",
@@ -182,14 +247,14 @@ export async function POST() {
           {
             name: "Board_Undertaking_Affidavit.pdf",
             cat: "UNDERTAKING",
-            text: "Non-Judicial Stamp Paper Affidavit. I, Dr. S. K. Sharma, Director of Apex Institute of Advanced Technology, solemnly affirm and declare that the institute complies with all AICTE statutory land and faculty norms.",
+            text: "Non-Judicial Stamp Paper Affidavit. I, Dr. S. K. Sharma, Director of Bharat Institute of Advanced Engineering, solemnly affirm and declare that the institute complies with all AICTE statutory land and faculty norms.",
             fields: {
-              institutionName: "Apex Institute of Advanced Technology",
+              institutionName: "Bharat Institute of Advanced Engineering",
             },
           },
         ],
       },
-      // 2. Missing Required Document (Missing Affiliation)
+      // 2. Missing Required Document (Pune Region)
       {
         ref: "AICTE-2026-MH-204",
         institutionId: "inst_sahyadri_204",
@@ -197,6 +262,7 @@ export async function POST() {
         type: "NEW_INSTITUTE",
         year: "2026-27",
         state: "Maharashtra",
+        region: "PUNE",
         docs: [
           {
             name: "Application_Form_Sahyadri.pdf",
@@ -217,7 +283,7 @@ export async function POST() {
           },
         ],
       },
-      // 3. Institution Name Mismatch
+      // 3. Institution Name Mismatch (Bangalore Region)
       {
         ref: "AICTE-2026-KA-309",
         institutionId: "inst_cauvery_309",
@@ -225,6 +291,7 @@ export async function POST() {
         type: "INCREASE_IN_INTAKE",
         year: "2026-27",
         state: "Karnataka",
+        region: "BANGALORE",
         docs: [
           {
             name: "Application_Summary.pdf",
@@ -266,7 +333,7 @@ export async function POST() {
           },
         ],
       },
-      // 4. Expired Certificate & Date Conflict (Issue date > Expiry)
+      // 4. Expired Certificate & Date Conflict (Bangalore Region / South)
       {
         ref: "AICTE-2026-TN-415",
         institutionId: "inst_coromandel_415",
@@ -274,6 +341,7 @@ export async function POST() {
         type: "EXTENSION_OF_APPROVAL",
         year: "2026-27",
         state: "Tamil Nadu",
+        region: "BANGALORE",
         docs: [
           {
             name: "Application_Form.pdf",
@@ -318,7 +386,7 @@ export async function POST() {
           },
         ],
       },
-      // 5. Verification Required Case
+      // 5. Verification Required Case (Delhi Region)
       {
         ref: "AICTE-2026-UP-522",
         institutionId: "inst_ganga_522",
@@ -326,6 +394,7 @@ export async function POST() {
         type: "EXTENSION_OF_APPROVAL",
         year: "2026-27",
         state: "Uttar Pradesh",
+        region: "DELHI",
         docs: [
           {
             name: "Application_Form.pdf",
@@ -369,7 +438,7 @@ export async function POST() {
           },
         ],
       },
-      // 6. Unreadable / Corrupted Document
+      // 6. Unreadable / Corrupted Document (Mumbai Region)
       {
         ref: "AICTE-2026-GJ-611",
         institutionId: "inst_sabarmati_611",
@@ -377,6 +446,7 @@ export async function POST() {
         type: "NEW_INSTITUTE",
         year: "2026-27",
         state: "Gujarat",
+        region: "MUMBAI",
         docs: [
           {
             name: "Scanned_Corrupted_Application.pdf",
@@ -426,6 +496,7 @@ export async function POST() {
         applicationType: item.type,
         academicYear: item.year,
         state: item.state,
+        region: item.region,
         status: "NEEDS_REVIEW",
         documents: docRecords,
         allFindings: [],

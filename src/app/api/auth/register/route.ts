@@ -19,6 +19,7 @@ const RegisterSchema = z.object({
   ]),
   institutionName: z.string().optional(),
   jurisdictionState: z.string().optional(),
+  region: z.string().optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -59,9 +60,13 @@ export async function POST(req: NextRequest) {
       passwordHash,
       role: validated.role,
       institutionId,
-      assignedJurisdiction: validated.jurisdictionState
-        ? { state: validated.jurisdictionState }
-        : undefined,
+      assignedJurisdiction:
+        validated.region || validated.jurisdictionState
+          ? {
+              region: validated.region,
+              state: validated.jurisdictionState,
+            }
+          : undefined,
       isActive: true,
       isVerified: true,
       createdAt: now,

@@ -18,7 +18,8 @@ export default function NewApplicationPage() {
   const [institutionName, setInstitutionName] = useState("");
   const [applicationType, setApplicationType] = useState<string>("EXTENSION_OF_APPROVAL");
   const [academicYear, setAcademicYear] = useState("2026-27");
-  const [state, setState] = useState("Delhi");
+  const [state, setState] = useState("Maharashtra");
+  const [region, setRegion] = useState("PUNE");
   const [files, setFiles] = useState<File[]>([]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -43,6 +44,7 @@ export default function NewApplicationPage() {
           applicationType,
           academicYear,
           state,
+          region,
         }),
       });
 
@@ -156,7 +158,7 @@ export default function NewApplicationPage() {
                 required
                 value={institutionName}
                 onChange={(e) => setInstitutionName(e.target.value)}
-                placeholder="e.g. Apex Institute of Advanced Technology"
+                placeholder="e.g. Modern Institute of Technology & Research"
                 className="text-xs h-9"
               />
               <span className="text-[10px] text-muted-foreground mt-1 block">
@@ -194,6 +196,23 @@ export default function NewApplicationPage() {
                   placeholder="e.g. Maharashtra or Delhi"
                   className="text-xs h-9"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="region-field" className="block text-xs font-semibold text-foreground mb-1.5">
+                  Regional Jurisdiction Office *
+                </label>
+                <select
+                  id="region-field"
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                  className="w-full text-xs rounded-md border border-input bg-card py-2 px-3 text-foreground focus:outline-none focus:ring-1 focus:ring-ring font-mono h-9"
+                >
+                  <option value="PUNE">RO Pune (Maharashtra)</option>
+                  <option value="MUMBAI">RO Mumbai (Maharashtra)</option>
+                  <option value="DELHI">RO Delhi (North)</option>
+                  <option value="BANGALORE">RO Bangalore (South)</option>
+                </select>
               </div>
             </div>
 

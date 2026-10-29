@@ -7,11 +7,14 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { SeverityBadge } from "@/components/SeverityBadge";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useApplications } from "@/lib/hooks/use-applications";
+import { useApplications, useCurrentUser } from "@/lib/hooks/use-applications";
 
 export default function ReviewQueuePage() {
+  const { data: user } = useCurrentUser();
   const { data: apps = [], isLoading: loading } = useApplications();
   const [filterType, setFilterType] = useState<string>("ALL_FLAGGED");
+
+  const userRegion = user?.assignedJurisdiction?.region;
 
   const queueItems = apps.flatMap((app) =>
     app.allFindings
@@ -45,11 +48,20 @@ export default function ReviewQueuePage() {
     <div className="space-y-4">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
-            Priority Review Queue
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              Priority Review Queue
+            </h1>
+            {userRegion && userRegion !== "ALL" && (
+              <Badge variant="outline" className="font-mono text-[10px] text-primary border-primary/30 bg-primary/5">
+                RO - {userRegion}
+              </Badge>
+            )}
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Active non-compliance flags and required statutory verifications.
+            {userRegion && userRegion !== "ALL"
+              ? `Active non-compliance flags and required statutory verifications for ${userRegion} region.`
+              : "Active non-compliance flags and required statutory verifications."}
           </p>
         </div>
 

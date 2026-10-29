@@ -44,7 +44,7 @@ export default function ApplicationDetailPage({
   const [selectedAction, setSelectedAction] = useState<
     "APPROVE" | "REJECT" | "REQUEST_CLARIFICATION" | "ESCALATE"
   >("REQUEST_CLARIFICATION");
-  const [reviewerName, setReviewerName] = useState(user?.name || "Dr. R. K. Verma (Scrutiny Officer)");
+  const [reviewerName, setReviewerName] = useState(user?.name || "Dr. Milind Kulkarni (RO - Pune)");
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
 
@@ -70,8 +70,8 @@ export default function ApplicationDetailPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           applicationId: app.id,
-          reviewerId: "REV_OFFICER_01",
-          reviewerName,
+          reviewerId: user?.userId || "RO_PUNE_OFFICER",
+          reviewerName: user?.name || reviewerName,
           action: selectedAction,
           outcomeStatus,
           notes: actionNotes,
@@ -114,8 +114,8 @@ export default function ApplicationDetailPage({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           applicationId: app.id,
-          reviewerId: "REV_OFFICER_01",
-          reviewerName,
+          reviewerId: user?.userId || "RO_PUNE_OFFICER",
+          reviewerName: user?.name || reviewerName,
           action: "DISMISS_FLAG",
           notes: dismissReason.trim(),
           targetFindingId: dismissingFinding.id,
@@ -228,16 +228,11 @@ export default function ApplicationDetailPage({
               </div>
             </div>
 
-            {app.jevDecision && (
-              <div className="bg-muted/40 p-2.5 rounded-md border border-border text-right">
-                <div className="text-[11px] font-mono text-muted-foreground">
-                  Layer: <span className="font-semibold text-foreground">{app.jevDecision.usedModel}</span>
-                </div>
-                <div className="text-[11px] font-mono text-foreground mt-0.5">
-                  Priority: <span className="font-bold">{app.jevDecision.reviewPriority}</span> • Suggested: {app.jevDecision.proposedStatus}
-                </div>
-              </div>
-            )}
+            <div className="flex items-center gap-2 self-start md:self-auto">
+              <Badge variant="outline" className="font-mono text-xs px-2.5 py-1">
+                {app.academicYear} Cycle
+              </Badge>
+            </div>
           </div>
         </CardHeader>
 

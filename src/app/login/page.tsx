@@ -38,6 +38,7 @@ function AuthForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [institutionName, setInstitutionName] = useState("");
+  const [selectedRegion, setSelectedRegion] = useState("PUNE");
   const [jurisdictionState, setJurisdictionState] = useState("Maharashtra");
 
   const [loading, setLoading] = useState(false);
@@ -98,6 +99,7 @@ function AuthForm() {
           role,
           institutionName: role.startsWith("COLLEGE") ? institutionName : undefined,
           jurisdictionState: role.includes("OFFICER") ? jurisdictionState : undefined,
+          region: role === "SENIOR_OFFICER" ? "ALL" : role === "REVIEW_OFFICER" ? selectedRegion : undefined,
         }),
       });
 
@@ -123,35 +125,41 @@ function AuthForm() {
   const isDev = process.env.NODE_ENV !== "production";
 
   return (
-    <div className="flex min-h-[82vh] items-center justify-center px-4 py-8">
+    <div className="relative flex min-h-[85vh] items-center justify-center px-4 py-8">
+      {/* Decorative gradient ambient background */}
+      <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none flex items-center justify-center">
+        <div className="w-[500px] h-[500px] bg-primary/10 rounded-full blur-3xl opacity-50 dark:opacity-20" />
+        <div className="w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-2xl opacity-40 dark:opacity-15 -translate-y-24 translate-x-32" />
+      </div>
+
       <div className="w-full max-w-lg space-y-5">
-        <div className="text-center space-y-1">
-          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+        <div className="text-center space-y-1.5">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-blue-600 text-primary-foreground shadow-md ring-4 ring-primary/10">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="text-xl font-bold tracking-tight text-foreground">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">
             AICTE Scrutiny & Regulatory Portal
           </h1>
-          <p className="text-xs text-muted-foreground">
-            Role-based institutional intake, hierarchy layers, and scrutiny officer access
+          <p className="text-xs text-muted-foreground max-w-md mx-auto">
+            Institutional verification gateway, multi-tier regulatory compliance & regional scrutiny officer access
           </p>
         </div>
 
         {/* Mode Selector Tabs: Sign In vs Sign Up */}
-        <div className="grid grid-cols-2 p-1 bg-muted/60 rounded-lg border border-border text-xs font-semibold">
+        <div className="grid grid-cols-2 p-1 bg-muted/80 backdrop-blur-xs rounded-xl border border-border/80 text-xs font-semibold shadow-2xs">
           <button
             type="button"
             onClick={() => {
               setMode("signin");
               setError(null);
             }}
-            className={`py-2 rounded-md transition flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 ${
               mode === "signin"
-                ? "bg-card text-foreground shadow-xs font-bold"
+                ? "bg-card text-foreground shadow-xs font-bold border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <LogIn className="h-3.5 w-3.5" />
+            <LogIn className="h-4 w-4 text-primary" />
             <span>Sign In to Account</span>
           </button>
 
@@ -161,23 +169,24 @@ function AuthForm() {
               setMode("signup");
               setError(null);
             }}
-            className={`py-2 rounded-md transition flex items-center justify-center gap-1.5 ${
+            className={`py-2.5 rounded-lg transition-all flex items-center justify-center gap-2 ${
               mode === "signup"
-                ? "bg-card text-foreground shadow-xs font-bold"
+                ? "bg-card text-foreground shadow-xs font-bold border border-border/60"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <UserPlus className="h-3.5 w-3.5" />
+            <UserPlus className="h-4 w-4 text-primary" />
             <span>Register New Account</span>
           </button>
         </div>
 
-        <Card className="shadow-xs border-border">
-          <CardHeader className="p-5 pb-3 border-b border-border">
-            <CardTitle className="text-sm font-semibold">
+        <Card className="shadow-lg border-border/80 bg-card/95 backdrop-blur-sm rounded-xl overflow-hidden">
+          <CardHeader className="p-5 pb-3 border-b border-border/60 bg-muted/20">
+            <CardTitle className="text-sm font-semibold flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary inline-block" />
               {mode === "signin" ? "Institutional Credential Authentication" : "Select Regulatory Role Layer"}
             </CardTitle>
-            <CardDescription className="text-xs text-muted-foreground mt-0.5">
+            <CardDescription className="text-xs">
               {mode === "signin"
                 ? "Sign in with your verified email and role credentials"
                 : "Choose your institutional or official scrutiny tier to create an authenticated profile"}
@@ -198,7 +207,7 @@ function AuthForm() {
                   Select Access Layer & Authority Level *
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {/* First Scrutiny Officer */}
+                  {/* Regional Scrutiny Officer */}
                   <button
                     type="button"
                     onClick={() => setRole("REVIEW_OFFICER")}
@@ -211,16 +220,16 @@ function AuthForm() {
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-xs text-foreground flex items-center gap-1">
                         <UserCheck className="h-3.5 w-3.5 text-emerald-600" />
-                        First Scrutiny Officer
+                        Regional Scrutiny Officer
                       </span>
                       {role === "REVIEW_OFFICER" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
                     </div>
                     <span className="text-[10px] text-muted-foreground mt-1">
-                      Initial statutory document scrutiny & discrepancy flagging
+                      Regional office scrutiny (Bangalore, Mumbai, Delhi, Pune)
                     </span>
                   </button>
 
-                  {/* Senior / Appellate Officer */}
+                  {/* Central / Senior Appellate Officer */}
                   <button
                     type="button"
                     onClick={() => setRole("SENIOR_OFFICER")}
@@ -233,12 +242,12 @@ function AuthForm() {
                     <div className="flex items-center justify-between">
                       <span className="font-bold text-xs text-foreground flex items-center gap-1">
                         <ShieldAlert className="h-3.5 w-3.5 text-amber-600" />
-                        Second / Senior Officer
+                        Central / Senior Officer
                       </span>
                       {role === "SENIOR_OFFICER" && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
                     </div>
                     <span className="text-[10px] text-muted-foreground mt-1">
-                      Appellate review, critical escalation & final approval
+                      HQ appellate review, apex escalation & final sign-off
                     </span>
                   </button>
 
@@ -388,7 +397,7 @@ function AuthForm() {
                     </label>
                     <Input
                       type="text"
-                      placeholder="e.g. Apex Institute of Advanced Technology"
+                      placeholder="e.g. Modern Institute of Technology & Research"
                       value={institutionName}
                       onChange={(e) => setInstitutionName(e.target.value)}
                       required
@@ -397,19 +406,53 @@ function AuthForm() {
                   </div>
                 )}
 
-                {role.includes("OFFICER") && (
+                {role === "REVIEW_OFFICER" && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-foreground">
+                        Regional Office Jurisdiction *
+                      </label>
+                      <select
+                        value={selectedRegion}
+                        onChange={(e) => {
+                          const reg = e.target.value;
+                          setSelectedRegion(reg);
+                          if (reg === "PUNE" || reg === "MUMBAI") setJurisdictionState("Maharashtra");
+                          else if (reg === "BANGALORE") setJurisdictionState("Karnataka");
+                          else if (reg === "DELHI") setJurisdictionState("Delhi");
+                        }}
+                        className="w-full h-9 rounded-md border border-input bg-background px-3 py-1 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        <option value="PUNE">RO Pune (Maharashtra)</option>
+                        <option value="MUMBAI">RO Mumbai (Maharashtra)</option>
+                        <option value="BANGALORE">RO Bangalore (Karnataka / South)</option>
+                        <option value="DELHI">RO Delhi (Delhi / North)</option>
+                      </select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-semibold text-foreground">
+                        State Jurisdiction *
+                      </label>
+                      <Input
+                        type="text"
+                        value={jurisdictionState}
+                        onChange={(e) => setJurisdictionState(e.target.value)}
+                        required
+                        className="h-9 text-xs"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {role === "SENIOR_OFFICER" && (
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-foreground">
-                      Assigned Scrutiny Jurisdiction (State / Region) *
+                      Jurisdiction Scope
                     </label>
-                    <Input
-                      type="text"
-                      placeholder="e.g. Maharashtra or Western Region"
-                      value={jurisdictionState}
-                      onChange={(e) => setJurisdictionState(e.target.value)}
-                      required
-                      className="h-9 text-xs"
-                    />
+                    <div className="h-9 px-3 py-2 text-xs rounded-md border border-input bg-muted/40 text-muted-foreground flex items-center justify-between">
+                      <span>Central HQ - All-India Jurisdiction</span>
+                      <span className="font-mono text-[10px] uppercase font-bold text-amber-600">ALL REGIONS</span>
+                    </div>
                   </div>
                 )}
 
@@ -437,35 +480,83 @@ function AuthForm() {
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {/* First Scrutiny Officer */}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={loading}
-                    onClick={() => handleLogin("officer@aicte.gov.in", "Officer@123456")}
-                    className="h-9 justify-start text-xs font-normal gap-2 border-dashed"
-                  >
-                    <UserCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                    <div className="text-left truncate">
-                      <span className="font-semibold text-foreground block text-[11px]">1st Officer (Scrutiny)</span>
-                      <span className="text-[9px] text-muted-foreground font-mono block">officer@aicte.gov.in</span>
-                    </div>
-                  </Button>
-
-                  {/* Second / Senior Appellate Officer */}
+                  {/* Central / Senior Appellate Officer */}
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
                     disabled={loading}
                     onClick={() => handleLogin("senior.officer@aicte.gov.in", "Senior@123456")}
+                    className="h-10 justify-start text-xs font-normal gap-2 border-dashed bg-amber-500/5 hover:bg-amber-500/10 border-amber-500/30 sm:col-span-2"
+                  >
+                    <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0" />
+                    <div className="text-left truncate">
+                      <span className="font-semibold text-foreground block text-[11px]">Central Officer (AICTE HQ / All Regions)</span>
+                      <span className="text-[9px] text-muted-foreground font-mono block">senior.officer@aicte.gov.in</span>
+                    </div>
+                  </Button>
+
+                  {/* RO - Bangalore */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                    onClick={() => handleLogin("officer.bangalore@aicte.gov.in", "Officer@123456")}
                     className="h-9 justify-start text-xs font-normal gap-2 border-dashed"
                   >
-                    <ShieldAlert className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
                     <div className="text-left truncate">
-                      <span className="font-semibold text-foreground block text-[11px]">2nd Officer (Senior)</span>
-                      <span className="text-[9px] text-muted-foreground font-mono block">senior.officer@aicte.gov.in</span>
+                      <span className="font-semibold text-foreground block text-[11px]">RO Bangalore</span>
+                      <span className="text-[9px] text-muted-foreground font-mono block">officer.bangalore@aicte.gov.in</span>
+                    </div>
+                  </Button>
+
+                  {/* RO - Mumbai */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                    onClick={() => handleLogin("officer.mumbai@aicte.gov.in", "Officer@123456")}
+                    className="h-9 justify-start text-xs font-normal gap-2 border-dashed"
+                  >
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <div className="text-left truncate">
+                      <span className="font-semibold text-foreground block text-[11px]">RO Mumbai</span>
+                      <span className="text-[9px] text-muted-foreground font-mono block">officer.mumbai@aicte.gov.in</span>
+                    </div>
+                  </Button>
+
+                  {/* RO - Delhi */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                    onClick={() => handleLogin("officer.delhi@aicte.gov.in", "Officer@123456")}
+                    className="h-9 justify-start text-xs font-normal gap-2 border-dashed"
+                  >
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <div className="text-left truncate">
+                      <span className="font-semibold text-foreground block text-[11px]">RO Delhi</span>
+                      <span className="text-[9px] text-muted-foreground font-mono block">officer.delhi@aicte.gov.in</span>
+                    </div>
+                  </Button>
+
+                  {/* RO - Pune */}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={loading}
+                    onClick={() => handleLogin("officer.pune@aicte.gov.in", "Officer@123456")}
+                    className="h-9 justify-start text-xs font-normal gap-2 border-dashed"
+                  >
+                    <UserCheck className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    <div className="text-left truncate">
+                      <span className="font-semibold text-foreground block text-[11px]">RO Pune</span>
+                      <span className="text-[9px] text-muted-foreground font-mono block">officer.pune@aicte.gov.in</span>
                     </div>
                   </Button>
 

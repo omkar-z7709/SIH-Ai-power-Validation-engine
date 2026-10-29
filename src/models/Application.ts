@@ -75,6 +75,7 @@ const ApplicationSchema = new Schema<IApplicationModel>(
     applicationType: { type: String, required: true },
     academicYear: { type: String, required: true },
     state: { type: String, required: true },
+    region: { type: String, index: true },
     status: { type: String, required: true, index: true },
     documents: [DocumentRecordSchema],
     allFindings: [FindingSchema],

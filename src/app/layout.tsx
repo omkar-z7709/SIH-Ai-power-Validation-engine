@@ -45,8 +45,8 @@ export default function RootLayout({
             <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
               {children}
             </main>
-            <footer className="border-t border-border bg-card/60 py-3 text-center text-[11px] text-muted-foreground font-mono">
-              AICTE Institutional Application Review System • PS 26261 • Human Review Required for Final Decisions
+            <footer className="border-t border-border bg-card/60 py-3 text-center text-[11px] text-muted-foreground">
+              All India Council for Technical Education (AICTE) • Official Scrutiny Portal
             </footer>
           </ReactQueryProvider>
         </ThemeProvider>

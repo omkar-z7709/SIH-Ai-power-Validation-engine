@@ -15,6 +15,7 @@ export interface UserRecord {
   role: UserRole;
   institutionId?: string; // Bound to an approved institution for COLLEGE_ADMIN and COLLEGE_STAFF
   assignedJurisdiction?: {
+    region?: string; // e.g. "BANGALORE" | "MUMBAI" | "DELHI" | "PUNE" | "ALL"
     state?: string;
     district?: string;
   };
@@ -63,6 +64,7 @@ export interface AuthSessionPayload {
   role: UserRole;
   institutionId?: string;
   assignedJurisdiction?: {
+    region?: string; // e.g. "BANGALORE" | "MUMBAI" | "DELHI" | "PUNE" | "ALL"
     state?: string;
     district?: string;
   };

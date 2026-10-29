@@ -46,6 +46,23 @@ export async function POST(request: NextRequest) {
       ? auth.scope.institutionId
       : body.institutionId || undefined;
 
+    // Automatically resolve region if not provided
+    let appRegion = validated.region;
+    if (!appRegion) {
+      const lowerState = validated.state.toLowerCase();
+      if (lowerState.includes("pune") || lowerState.includes("maharashtra")) {
+        appRegion = "PUNE";
+      } else if (lowerState.includes("delhi")) {
+        appRegion = "DELHI";
+      } else if (lowerState.includes("karnataka") || lowerState.includes("bangalore")) {
+        appRegion = "BANGALORE";
+      } else if (lowerState.includes("mumbai")) {
+        appRegion = "MUMBAI";
+      } else {
+        appRegion = "PUNE";
+      }
+    }
+
     const newApp: ApplicationRecord = {
       id: `app_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
       referenceId: validated.referenceId,
@@ -54,6 +71,7 @@ export async function POST(request: NextRequest) {
       applicationType: validated.applicationType,
       academicYear: validated.academicYear,
       state: validated.state,
+      region: appRegion,
       status: "INCOMPLETE", // initial status until documents are uploaded and evaluated
       documents: [],
       allFindings: [],

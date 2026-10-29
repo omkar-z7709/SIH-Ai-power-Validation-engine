@@ -20,7 +20,6 @@ import { SeverityBadge } from "@/components/SeverityBadge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { useApplications, useInvalidateApplications } from "@/lib/hooks/use-applications";
 
 export default function DashboardPage() {
@@ -193,150 +192,85 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* Main Grid: Priority Cases & Scrutiny Specifications */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: High Priority Queue */}
-        <div className="lg:col-span-2">
-          <Card className="shadow-xs overflow-hidden">
-            <CardHeader className="px-4 py-3 bg-muted/30 border-b border-border flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
-                  High-Priority Review Queue
-                </CardTitle>
-                <CardDescription className="text-[11px] text-muted-foreground mt-0.5">
-                  Submissions requiring officer determination
-                </CardDescription>
-              </div>
-              <Link
-                href="/queue"
-                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition"
-              >
-                <span>View All Queue</span>
-                <ArrowRight className="h-3 w-3" />
-              </Link>
-            </CardHeader>
+      {/* High-Priority Review Queue */}
+      <Card className="shadow-xs overflow-hidden">
+        <CardHeader className="px-4 py-3 bg-muted/30 border-b border-border flex flex-row items-center justify-between">
+          <div>
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
+              High-Priority Review Queue
+            </CardTitle>
+            <CardDescription className="text-[11px] text-muted-foreground mt-0.5">
+              Submissions requiring officer determination
+            </CardDescription>
+          </div>
+          <Link
+            href="/queue"
+            className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md hover:bg-muted text-muted-foreground hover:text-foreground transition"
+          >
+            <span>View All Queue</span>
+            <ArrowRight className="h-3 w-3" />
+          </Link>
+        </CardHeader>
 
-            <CardContent className="p-0 divide-y divide-border">
-              {highPriorityCases.length === 0 ? (
-                <div className="p-8 text-center text-xs text-muted-foreground">
-                  No active high-priority flags. Click &quot;Seed 6 Test Scenarios&quot; to test.
-                </div>
-              ) : (
-                highPriorityCases.map((app) => (
-                  <div key={app.id} className="p-4 hover:bg-muted/20 transition">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <div className="flex items-center space-x-2">
-                          <Link
-                            href={`/applications/${app.id}`}
-                            className="font-bold text-sm text-foreground hover:text-primary transition"
-                          >
-                            {app.institutionName}
-                          </Link>
-                          <Badge variant="outline" className="font-mono text-[10px]">
-                            {app.referenceId}
-                          </Badge>
-                        </div>
-                        <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
-                          {app.state} • {app.academicYear} • {app.documents.length} credentials attached
-                        </div>
-                      </div>
-                      <StatusBadge status={app.status} size="sm" />
-                    </div>
-
-                    <div className="mt-2.5 space-y-1.5">
-                      {app.allFindings.slice(0, 2).map((finding, idx) => (
-                        <div
-                          key={`${app.id}_${finding.id || finding.ruleId}_${idx}`}
-                          className="flex items-start space-x-2 text-xs bg-muted/40 p-2 rounded-md border border-border"
-                        >
-                          <SeverityBadge severity={finding.severity} />
-                          <span className="font-semibold text-foreground">
-                            {finding.title}:
-                          </span>
-                          <span className="text-muted-foreground line-clamp-1">
-                            {finding.explanation}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className="mt-3 flex justify-end">
+        <CardContent className="p-0 divide-y divide-border">
+          {highPriorityCases.length === 0 ? (
+            <div className="p-8 text-center text-xs text-muted-foreground">
+              No active high-priority flags. Click &quot;Seed 6 Test Scenarios&quot; to test.
+            </div>
+          ) : (
+            highPriorityCases.map((app) => (
+              <div key={app.id} className="p-4 hover:bg-muted/20 transition">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="flex items-center space-x-2">
                       <Link
                         href={`/applications/${app.id}`}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border border-input bg-card hover:bg-muted text-foreground transition shadow-2xs"
+                        className="font-bold text-sm text-foreground hover:text-primary transition"
                       >
-                        <span>Examine Details</span>
-                        <ArrowUpRight className="h-3 w-3" />
+                        {app.institutionName}
                       </Link>
+                      <Badge variant="outline" className="font-mono text-[10px]">
+                        {app.referenceId}
+                      </Badge>
+                    </div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                      {app.state} • {app.academicYear} • {app.documents.length} credentials attached
                     </div>
                   </div>
-                ))
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  <StatusBadge status={app.status} size="sm" />
+                </div>
 
-        {/* Right Column: Statutory Specs & System Telemetry */}
-        <div className="space-y-4">
-          <Card className="shadow-xs">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
-                Statutory Regulatory Norms
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-1 space-y-2 text-xs text-muted-foreground">
-              <p className="leading-relaxed">
-                Automated deterministic checks evaluate submissions against AICTE Approval Process Handbook (APH) rules:
-              </p>
-              <Separator className="my-2" />
-              <div className="space-y-2 font-mono text-[11px]">
-                <div className="flex items-start space-x-2">
-                  <span className="font-bold text-foreground">01.</span>
-                  <span>Mandatory documents: Application, NAAC/NBA, Affiliation, Affidavit.</span>
+                <div className="mt-2.5 space-y-1.5">
+                  {app.allFindings.slice(0, 2).map((finding, idx) => (
+                    <div
+                      key={`${app.id}_${finding.id || finding.ruleId}_${idx}`}
+                      className="flex items-start space-x-2 text-xs bg-muted/40 p-2 rounded-md border border-border"
+                    >
+                      <SeverityBadge severity={finding.severity} />
+                      <span className="font-semibold text-foreground">
+                        {finding.title}:
+                      </span>
+                      <span className="text-muted-foreground line-clamp-1">
+                        {finding.explanation}
+                      </span>
+                    </div>
+                  ))}
                 </div>
-                <div className="flex items-start space-x-2">
-                  <span className="font-bold text-foreground">02.</span>
-                  <span>Cross-document legal entity name consistency.</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="font-bold text-foreground">03.</span>
-                  <span>Date chronology (Issue date must precede expiry).</span>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <span className="font-bold text-foreground">04.</span>
-                  <span>SHA-256 duplicate submission detection.</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
 
-          <Card className="shadow-xs">
-            <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-foreground">
-                System Telemetry & Engine State
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-4 pt-1 space-y-2 text-xs text-muted-foreground">
-              <div className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border">
-                <span className="font-medium text-foreground">Deterministic Rule Engine</span>
-                <Badge variant="outline" className="text-emerald-600 font-mono text-[10px]">
-                  Online (8 Rules)
-                </Badge>
+                <div className="mt-3 flex justify-end">
+                  <Link
+                    href={`/applications/${app.id}`}
+                    className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md border border-input bg-card hover:bg-muted text-foreground transition shadow-2xs"
+                  >
+                    <span>Examine Details</span>
+                    <ArrowUpRight className="h-3 w-3" />
+                  </Link>
+                </div>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-md bg-muted/40 border border-border">
-                <span className="font-medium text-foreground">Jev Decision Layer</span>
-                <Badge variant="outline" className="font-mono text-[10px]">
-                  Fallback Mode
-                </Badge>
-              </div>
-              <p className="text-[11px] text-muted-foreground pt-1">
-                Automated findings remain strictly advisory. Final determination requires officer review.
-              </p>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

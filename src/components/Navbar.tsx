@@ -118,18 +118,13 @@ export function Navbar() {
             <div className="relative flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-semibold shadow-xs group-hover:scale-105 transition-transform">
               <FileCheck className="h-4 w-4" />
             </div>
-            <div className="flex flex-col">
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-semibold tracking-tight text-foreground">
-                  AICTE Scrutiny Studio
-                </span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                  <Home className="h-2.5 w-2.5" />
-                  <span>Home</span>
-                </span>
-              </div>
-              <span className="text-[10px] font-mono text-muted-foreground hidden sm:inline -mt-0.5">
-                PS 26261
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-semibold tracking-tight text-foreground">
+                AICTE Scrutiny Studio
+              </span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                <Home className="h-2.5 w-2.5" />
+                <span>Home</span>
               </span>
             </div>
           </Link>

@@ -18,21 +18,25 @@ export default function OfficerDashboard() {
     storageMode: "mongodb",
   });
   const [apps, setApps] = useState<any[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let isMounted = true;
     async function loadData() {
       try {
-        const [countsRes, appsRes] = await Promise.all([
+        const [countsRes, appsRes, meRes] = await Promise.all([
           fetch("/api/dashboard/counts"),
           fetch("/api/applications"),
+          fetch("/api/auth/me"),
         ]);
         const countsData = await countsRes.json();
         const appsData = await appsRes.json();
+        const meData = await meRes.json();
         if (isMounted) {
           if (countsData.success) setCounts(countsData.data);
           if (appsData.success) setApps(appsData.data);
+          if (meData.success) setCurrentUser(meData.user);
         }
       } catch (e) {
         console.error(e);
@@ -46,6 +50,8 @@ export default function OfficerDashboard() {
     };
   }, []);
 
+  const officerRegion = currentUser?.assignedJurisdiction?.region || (currentUser?.role === "SENIOR_OFFICER" ? "ALL" : null);
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-4">
@@ -55,11 +61,18 @@ export default function OfficerDashboard() {
               Officer Portal
             </h1>
             <Badge variant="outline" className="text-[10px] uppercase font-mono">
-              REVIEW_OFFICER
+              {currentUser?.role || "REVIEW_OFFICER"}
             </Badge>
+            {officerRegion && (
+              <Badge variant="secondary" className="text-[10px] uppercase font-semibold bg-primary/10 text-primary border border-primary/20">
+                {officerRegion === "ALL" ? "Central HQ (All Regions)" : `Regional Office: ${officerRegion}`}
+              </Badge>
+            )}
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Institutional scrutiny queue, statutory discrepancy adjudication, and approval decisions.
+            {officerRegion === "ALL" 
+              ? "All-India statutory queue oversight, appellate escalations, and apex approval decisions." 
+              : `Jurisdiction: ${officerRegion} regional scrutiny queue, document verification, and discrepancy adjudication.`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -129,7 +142,7 @@ export default function OfficerDashboard() {
               <TableRow className="text-[11px] font-medium">
                 <TableHead className="pl-4">Reference ID</TableHead>
                 <TableHead>Institution</TableHead>
-                <TableHead>State</TableHead>
+                <TableHead>State / Region</TableHead>
                 <TableHead>Findings</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right pr-4">Action</TableHead>
@@ -157,7 +170,14 @@ export default function OfficerDashboard() {
                     <TableCell className="font-medium text-foreground">
                       {app.institutionName}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{app.state}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {app.state}
+                      {app.region && (
+                        <span className="ml-1.5 inline-block text-[10px] font-mono font-medium px-1.5 py-0.2 rounded bg-muted">
+                          {app.region}
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {app.allFindings?.length > 0 ? (
                         <span className="text-rose-600 font-semibold">

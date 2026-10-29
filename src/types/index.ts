@@ -134,6 +134,7 @@ export interface ApplicationRecord {
   applicationType: "NEW_INSTITUTE" | "EXTENSION_OF_APPROVAL" | "INCREASE_IN_INTAKE" | "CLOSURE";
   academicYear: string;
   state: string;
+  region?: "BANGALORE" | "MUMBAI" | "DELHI" | "PUNE" | string;
   status: DecisionStatus;
   documents: DocumentRecord[];
   allFindings: Finding[];

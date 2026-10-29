@@ -47,6 +47,7 @@ export const CreateApplicationSchema = z.object({
   ]),
   academicYear: z.string().regex(/^\d{4}-\d{2,4}$/, "Academic year must be format YYYY-YY (e.g. 2026-27)"),
   state: z.string().min(2, "State name required"),
+  region: z.string().optional(),
 });
 
 export const SubmitReviewActionSchema = z.object({
